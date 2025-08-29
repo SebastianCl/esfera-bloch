@@ -52,6 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				quantum: {
+					blue: 'hsl(var(--quantum-blue))',
+					purple: 'hsl(var(--quantum-purple))',
+					cyan: 'hsl(var(--quantum-cyan))',
+					magenta: 'hsl(var(--quantum-magenta))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -84,11 +90,49 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'quantum-pulse': {
+					'0%, 100%': {
+						opacity: '1',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						transform: 'scale(1.05)'
+					}
+				},
+				'rotate-sphere': {
+					'from': {
+						transform: 'rotateY(0deg)'
+					},
+					'to': {
+						transform: 'rotateY(360deg)'
+					}
+				},
+				'glow': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px hsl(var(--primary) / 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 30px hsl(var(--primary) / 0.6)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'quantum-pulse': 'quantum-pulse 2s ease-in-out infinite',
+				'rotate-sphere': 'rotate-sphere 20s linear infinite',
+				'glow': 'glow 2s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'gradient-quantum': 'var(--gradient-quantum)',
+				'gradient-sphere': 'var(--gradient-sphere)',
+				'gradient-glow': 'var(--gradient-glow)'
+			},
+			boxShadow: {
+				'quantum': 'var(--shadow-quantum)',
+				'glow': 'var(--shadow-glow)'
 			}
 		}
 	},
