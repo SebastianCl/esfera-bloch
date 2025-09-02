@@ -156,7 +156,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
           
           {/* 3D Visualization */}
           <div className="lg:col-span-2">
@@ -172,36 +172,33 @@ const Index = () => {
           </div>
 
           {/* Controls and Information */}
-          <div className="flex flex-col h-full space-y-3">
-            {/* Controls - Fixed height */}
-            <div className="flex-shrink-0">
-              <QuantumControls
-                onGateClick={applyGate}
-                onPresetClick={applyPreset}
-                onReset={handleReset}
-                theta={theta}
-                phi={phi}
-                onRotationChange={handleRotationChange}
-              />
-            </div>
-            
-            {/* State Display - Fixed height */}
-            <div className="flex-shrink-0">
-              <StateDisplay theta={theta} phi={phi} />
-            </div>
-            
-            {/* Theory Tab - Takes remaining space */}
-            <div className="flex-1 min-h-0">
-              <Tabs defaultValue="theory" className="w-full h-full">
-                <TabsList className="grid w-full grid-cols-1">
-                  <TabsTrigger value="theory">Teoría Cuántica</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="theory" className="mt-2 h-[calc(100%-40px)] overflow-y-auto">
-                  <QuantumEducation />
-                </TabsContent>
-              </Tabs>
-            </div>
+          <div className="space-y-4 overflow-y-auto">
+            <Tabs defaultValue="controls" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="controls">Controles</TabsTrigger>
+                <TabsTrigger value="state">Estado</TabsTrigger>
+                <TabsTrigger value="theory">Teoría</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="controls" className="mt-4">
+                <QuantumControls
+                  onGateClick={applyGate}
+                  onPresetClick={applyPreset}
+                  onReset={handleReset}
+                  theta={theta}
+                  phi={phi}
+                  onRotationChange={handleRotationChange}
+                />
+              </TabsContent>
+              
+              <TabsContent value="state" className="mt-4">
+                <StateDisplay theta={theta} phi={phi} />
+              </TabsContent>
+              
+              <TabsContent value="theory" className="mt-4">
+                <QuantumEducation />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
