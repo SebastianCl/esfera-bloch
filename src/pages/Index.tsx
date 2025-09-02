@@ -156,7 +156,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
           
           {/* 3D Visualization */}
           <div className="lg:col-span-2">
@@ -172,30 +172,36 @@ const Index = () => {
           </div>
 
           {/* Controls and Information */}
-          <div className="space-y-4 overflow-y-auto">
-            {/* Controls */}
-            <QuantumControls
-              onGateClick={applyGate}
-              onPresetClick={applyPreset}
-              onReset={handleReset}
-              theta={theta}
-              phi={phi}
-              onRotationChange={handleRotationChange}
-            />
+          <div className="flex flex-col h-full space-y-3">
+            {/* Controls - Fixed height */}
+            <div className="flex-shrink-0">
+              <QuantumControls
+                onGateClick={applyGate}
+                onPresetClick={applyPreset}
+                onReset={handleReset}
+                theta={theta}
+                phi={phi}
+                onRotationChange={handleRotationChange}
+              />
+            </div>
             
-            {/* State Display */}
-            <StateDisplay theta={theta} phi={phi} />
+            {/* State Display - Fixed height */}
+            <div className="flex-shrink-0">
+              <StateDisplay theta={theta} phi={phi} />
+            </div>
             
-            {/* Theory Tab */}
-            <Tabs defaultValue="theory" className="w-full">
-              <TabsList className="grid w-full grid-cols-1">
-                <TabsTrigger value="theory">Teoría Cuántica</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="theory" className="mt-4">
-                <QuantumEducation />
-              </TabsContent>
-            </Tabs>
+            {/* Theory Tab - Takes remaining space */}
+            <div className="flex-1 min-h-0">
+              <Tabs defaultValue="theory" className="w-full h-full">
+                <TabsList className="grid w-full grid-cols-1">
+                  <TabsTrigger value="theory">Teoría Cuántica</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="theory" className="mt-2 h-[calc(100%-40px)] overflow-y-auto">
+                  <QuantumEducation />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </main>
