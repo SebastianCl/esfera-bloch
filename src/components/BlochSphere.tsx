@@ -7,9 +7,10 @@ interface BlochSphereProps {
   theta: number;
   phi: number;
   className?: string;
+  onStateChange?: (theta: number, phi: number) => void;
 }
 
-function SphereVisualization({ theta, phi }: { theta: number; phi: number }) {
+function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi: number; onStateChange?: (theta: number, phi: number) => void }) {
   const vectorRef = useRef<THREE.Group>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
 
@@ -27,6 +28,28 @@ function SphereVisualization({ theta, phi }: { theta: number; phi: number }) {
       sphereRef.current.rotation.y = state.clock.elapsedTime * 0.1;
     }
   });
+
+  // Handle click on sphere
+  const handleSphereClick = (event: any) => {
+    if (!onStateChange) return;
+    
+    event.stopPropagation();
+    const clickPoint = event.point;
+    
+    // Normalize the click point to sphere surface
+    const distance = Math.sqrt(clickPoint.x ** 2 + clickPoint.y ** 2 + clickPoint.z ** 2);
+    const normalizedPoint = {
+      x: clickPoint.x / distance,
+      y: clickPoint.y / distance,
+      z: clickPoint.z / distance
+    };
+    
+    // Convert Cartesian to spherical coordinates
+    const newTheta = Math.acos(Math.max(-1, Math.min(1, normalizedPoint.z)));
+    const newPhi = Math.atan2(normalizedPoint.y, normalizedPoint.x);
+    
+    onStateChange(newTheta, newPhi);
+  };
 
   // Create sphere wireframe points
   const spherePoints = useMemo(() => {
@@ -73,7 +96,7 @@ function SphereVisualization({ theta, phi }: { theta: number; phi: number }) {
       <pointLight position={[10, 10, 10]} intensity={1} />
 
       {/* Main sphere (wireframe) */}
-      <mesh ref={sphereRef} position={[0, 0, 0]}>
+      <mesh ref={sphereRef} position={[0, 0, 0]} onClick={handleSphereClick}>
         <sphereGeometry args={[1, 32, 16]} />
         <meshBasicMaterial 
           color="#8B5CF6" 
@@ -81,6 +104,12 @@ function SphereVisualization({ theta, phi }: { theta: number; phi: number }) {
           transparent 
           opacity={0.3} 
         />
+      </mesh>
+
+      {/* Invisible clickable sphere for better click detection */}
+      <mesh position={[0, 0, 0]} onClick={handleSphereClick}>
+        <sphereGeometry args={[1, 32, 16]} />
+        <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
       {/* Coordinate axes */}
@@ -184,14 +213,14 @@ function SphereVisualization({ theta, phi }: { theta: number; phi: number }) {
   );
 }
 
-export function BlochSphere({ theta, phi, className = "" }: BlochSphereProps) {
+export function BlochSphere({ theta, phi, className = "", onStateChange }: BlochSphereProps) {
   return (
     <div className={`sphere-container rounded-xl ${className}`}>
       <Canvas
         camera={{ position: [3, 2, 3], fov: 50 }}
         style={{ height: '100%', width: '100%' }}
       >
-        <SphereVisualization theta={theta} phi={phi} />
+        <SphereVisualization theta={theta} phi={phi} onStateChange={onStateChange} />
         <OrbitControls 
           enablePan={true}
           enableZoom={true}

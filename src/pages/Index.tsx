@@ -128,6 +128,14 @@ const Index = () => {
     }
   };
 
+  const handleSphereClick = (newTheta: number, newPhi: number) => {
+    setTheta(newTheta);
+    setPhi(newPhi);
+    toast('Estado actualizado por click en la esfera', {
+      description: `θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -166,6 +174,7 @@ const Index = () => {
                   theta={theta} 
                   phi={phi} 
                   className="h-full w-full"
+                  onStateChange={handleSphereClick}
                 />
               </div>
             </Card>
