@@ -173,27 +173,24 @@ const Index = () => {
 
           {/* Controls and Information */}
           <div className="space-y-4 overflow-y-auto">
-            <Tabs defaultValue="controls" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="controls">Controles</TabsTrigger>
-                <TabsTrigger value="state">Estado</TabsTrigger>
-                <TabsTrigger value="theory">Teoría</TabsTrigger>
+            {/* Controls */}
+            <QuantumControls
+              onGateClick={applyGate}
+              onPresetClick={applyPreset}
+              onReset={handleReset}
+              theta={theta}
+              phi={phi}
+              onRotationChange={handleRotationChange}
+            />
+            
+            {/* State Display */}
+            <StateDisplay theta={theta} phi={phi} />
+            
+            {/* Theory Tab */}
+            <Tabs defaultValue="theory" className="w-full">
+              <TabsList className="grid w-full grid-cols-1">
+                <TabsTrigger value="theory">Teoría Cuántica</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="controls" className="mt-4">
-                <QuantumControls
-                  onGateClick={applyGate}
-                  onPresetClick={applyPreset}
-                  onReset={handleReset}
-                  theta={theta}
-                  phi={phi}
-                  onRotationChange={handleRotationChange}
-                />
-              </TabsContent>
-              
-              <TabsContent value="state" className="mt-4">
-                <StateDisplay theta={theta} phi={phi} />
-              </TabsContent>
               
               <TabsContent value="theory" className="mt-4">
                 <QuantumEducation />
