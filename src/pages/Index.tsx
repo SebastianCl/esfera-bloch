@@ -156,12 +156,12 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 h-[calc(100vh-140px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
           
-          {/* 3D Visualization - Takes up more space */}
-          <div className="xl:col-span-3">
-            <Card className="h-full">
-              <div className="h-full p-4">
+          {/* 3D Visualization */}
+          <div className="lg:col-span-2">
+            <Card className="h-full p-4">
+              <div className="h-full">
                 <BlochSphere 
                   theta={theta} 
                   phi={phi} 
@@ -171,20 +171,16 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* Right Panel: Controls and State Information */}
-          <div className="xl:col-span-2 flex flex-col gap-4 h-full">
-            
-            {/* Quantum Controls Panel */}
-            <Card className="flex-1 min-h-0">
-              <div className="p-4 border-b border-border/40">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Controles Cuánticos
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Compuertas y manipulación de estados
-                </p>
-              </div>
-              <div className="p-4 overflow-y-auto h-full">
+          {/* Controls and Information */}
+          <div className="space-y-4 overflow-y-auto">
+            <Tabs defaultValue="controls" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="controls">Controles</TabsTrigger>
+                <TabsTrigger value="state">Estado</TabsTrigger>
+                <TabsTrigger value="theory">Teoría</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="controls" className="mt-4">
                 <QuantumControls
                   onGateClick={applyGate}
                   onPresetClick={applyPreset}
@@ -193,40 +189,16 @@ const Index = () => {
                   phi={phi}
                   onRotationChange={handleRotationChange}
                 />
-              </div>
-            </Card>
-
-            {/* State Information Panel */}
-            <Card className="flex-1 min-h-0">
-              <div className="p-4 border-b border-border/40">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Estado Cuántico Actual
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Información detallada del estado
-                </p>
-              </div>
-              <div className="p-4 overflow-y-auto h-full">
+              </TabsContent>
+              
+              <TabsContent value="state" className="mt-4">
                 <StateDisplay theta={theta} phi={phi} />
-              </div>
-            </Card>
-
-            {/* Theory Section - Collapsible */}
-            <div className="mt-4">
-              <Tabs defaultValue="" className="w-full">
-                <TabsList className="grid w-full grid-cols-1">
-                  <TabsTrigger value="theory">📚 Teoría y Conceptos</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="theory" className="mt-4">
-                  <Card>
-                    <div className="max-h-96 overflow-y-auto">
-                      <QuantumEducation />
-                    </div>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
+              </TabsContent>
+              
+              <TabsContent value="theory" className="mt-4">
+                <QuantumEducation />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
