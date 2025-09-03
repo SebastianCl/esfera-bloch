@@ -151,6 +151,14 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <a 
+                href="../index.html"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white h-9 px-3 shadow-md hover:shadow-lg"
+                style={{ textDecoration: 'none' }}
+              >
+                <span className="mr-2">🏠</span>
+                Inicio
+              </a>
               <Button variant="outline" size="sm" onClick={handleReset}>
                 Reiniciar
               </Button>
