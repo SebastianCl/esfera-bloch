@@ -8,9 +8,9 @@ interface StateDisplayProps {
 }
 
 export function StateDisplay({ theta, phi }: StateDisplayProps) {
-  // Calculate Cartesian coordinates
+  // Calculate Cartesian coordinates (Z vertical convention)
   const x = Math.sin(theta) * Math.cos(phi);
-  const y = Math.sin(theta) * Math.sin(phi);
+  const y = Math.sin(theta) * Math.sin(phi); 
   const z = Math.cos(theta);
 
   // Calculate complex amplitudes

@@ -14,11 +14,13 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
   const vectorRef = useRef<THREE.Group>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
 
-  // Calculate Cartesian coordinates from spherical
+  // Calculate Cartesian coordinates from spherical (Z vertical convention)
+  // In physics convention: Z is vertical, X and Y are horizontal
+  // But Three.js uses Y as vertical, so we need to map: physics Z -> Three.js Y
   const position = useMemo(() => {
-    const x = Math.sin(theta) * Math.cos(phi);
-    const y = Math.sin(theta) * Math.sin(phi);
-    const z = Math.cos(theta);
+    const x = Math.sin(theta) * Math.cos(phi);  // X stays X
+    const z = Math.sin(theta) * Math.sin(phi);  // Physics Y -> Three.js Z  
+    const y = Math.cos(theta);                  // Physics Z -> Three.js Y (vertical)
     return [x, y, z] as [number, number, number];
   }, [theta, phi]);
 
@@ -44,9 +46,11 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
       z: clickPoint.z / distance
     };
     
-    // Convert Cartesian to spherical coordinates
-    const newTheta = Math.acos(Math.max(-1, Math.min(1, normalizedPoint.z)));
-    const newPhi = Math.atan2(normalizedPoint.y, normalizedPoint.x);
+    // Convert Cartesian to spherical coordinates (Z vertical convention)
+    // Three.js Y is vertical, but we want physics Z to be vertical
+    // So: Three.js Y -> Physics Z, Three.js Z -> Physics Y
+    const newTheta = Math.acos(Math.max(-1, Math.min(1, normalizedPoint.y)));
+    const newPhi = Math.atan2(normalizedPoint.z, normalizedPoint.x);
     
     onStateChange(newTheta, newPhi);
   };
@@ -112,7 +116,7 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
-      {/* Coordinate axes */}
+      {/* Coordinate axes - Z vertical (mapped to Y in Three.js), X and Y horizontal */}
       <Line
         points={[[-1.5, 0, 0], [1.5, 0, 0]]}
         color="#EF4444"
@@ -120,16 +124,16 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
       />
       <Line
         points={[[0, -1.5, 0], [0, 1.5, 0]]}
-        color="#10B981"
+        color="#3B82F6"
         lineWidth={2}
       />
       <Line
         points={[[0, 0, -1.5], [0, 0, 1.5]]}
-        color="#3B82F6"
+        color="#10B981"
         lineWidth={2}
       />
 
-      {/* Axis labels */}
+      {/* Axis labels - Z vertical convention (Z maps to Y axis in Three.js) */}
       <Text
         position={[1.7, 0, 0]}
         fontSize={0.2}
@@ -142,25 +146,25 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
       <Text
         position={[0, 1.7, 0]}
         fontSize={0.2}
-        color="#10B981"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Y
-      </Text>
-      <Text
-        position={[0, 0, 1.7]}
-        fontSize={0.2}
         color="#3B82F6"
         anchorX="center"
         anchorY="middle"
       >
         Z
       </Text>
-
-      {/* State labels */}
       <Text
-        position={[0, 0, 1.3]}
+        position={[0, 0, 1.7]}
+        fontSize={0.2}
+        color="#10B981"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Y
+      </Text>
+
+      {/* State labels - |0⟩ at top (Z=+1, maps to Y=+1), |1⟩ at bottom (Z=-1, maps to Y=-1) */}
+      <Text
+        position={[0, 1.3, 0]}
         fontSize={0.15}
         color="#A855F7"
         anchorX="center"
@@ -169,7 +173,7 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
         |0⟩
       </Text>
       <Text
-        position={[0, 0, -1.3]}
+        position={[0, -1.3, 0]}
         fontSize={0.15}
         color="#A855F7"
         anchorX="center"
@@ -199,7 +203,7 @@ function SphereVisualization({ theta, phi, onStateChange }: { theta: number; phi
         </mesh>
       </group>
 
-      {/* Equatorial plane */}
+      {/* Equatorial plane - horizontal (XY plane in physics, XZ plane in Three.js) */}
       <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.98, 1.02, 64]} />
         <meshBasicMaterial 
