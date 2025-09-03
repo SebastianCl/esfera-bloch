@@ -187,26 +187,6 @@ Las contribuciones son bienvenidas! Por favor:
 - 🌐 Internacionalización
 - ⚡ Optimizaciones de rendimiento
 
-## 📝 Roadmap
-
-### v1.1 (Próximo)
-- [ ] Circuitos cuánticos multi-qubit
-- [ ] Más compuertas (CNOT, Toffoli)
-- [ ] Animaciones de transformación
-- [ ] Modo tutorial interactivo
-
-### v1.2 (Futuro)
-- [ ] Simulación de algoritmos cuánticos
-- [ ] Exportación de estados/circuitos
-- [ ] Modo colaborativo
-- [ ] API para integración educativa
-
-### v2.0 (Visión)
-- [ ] Simulador cuántico completo
-- [ ] Soporte para múltiples qubits
-- [ ] Integración con hardware cuántico real
-- [ ] Plataforma educativa completa
-
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
