@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 export function QuantumEducation() {
   return (
     <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4 text-primary">Teoría Cuántica</h3>
+      <h3 className="text-lg font-semibold mb-4 text-primary">Teoría cuántica</h3>
       
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="bloch-sphere">
@@ -26,7 +26,7 @@ export function QuantumEducation() {
         </AccordionItem>
 
         <AccordionItem value="quantum-gates">
-          <AccordionTrigger className="text-sm">Compuertas Cuánticas</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Compuertas cuánticas</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-3">
             <div>
               <h5 className="font-medium text-foreground mb-1">Compuertas de Pauli:</h5>
@@ -49,7 +49,7 @@ export function QuantumEducation() {
         </AccordionItem>
 
         <AccordionItem value="superposition">
-          <AccordionTrigger className="text-sm">Superposición Cuántica</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Superposición cuántica</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               La superposición permite que un qubit exista en una combinación de estados |0⟩ y |1⟩ simultáneamente.
@@ -64,7 +64,7 @@ export function QuantumEducation() {
         </AccordionItem>
 
         <AccordionItem value="measurement">
-          <AccordionTrigger className="text-sm">Medición Cuántica</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Medición cuántica</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Al medir un qubit, el estado colapsa a |0⟩ o |1⟩ con probabilidades:
@@ -80,7 +80,7 @@ export function QuantumEducation() {
         </AccordionItem>
 
         <AccordionItem value="coordinates">
-          <AccordionTrigger className="text-sm">Sistema de Coordenadas</AccordionTrigger>
+          <AccordionTrigger className="text-sm">Sistema de coordenadas</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               La posición en la esfera se describe mediante ángulos esféricos:

@@ -10,14 +10,14 @@ interface StateDisplayProps {
 export function StateDisplay({ theta, phi }: StateDisplayProps) {
   // Calculate Cartesian coordinates (Z vertical convention)
   const x = Math.sin(theta) * Math.cos(phi);
-  const y = Math.sin(theta) * Math.sin(phi); 
+  const y = Math.sin(theta) * Math.sin(phi);
   const z = Math.cos(theta);
 
   // Calculate complex amplitudes
   const alpha = Math.cos(theta / 2);
   const betaReal = Math.sin(theta / 2) * Math.cos(phi);
   const betaImag = Math.sin(theta / 2) * Math.sin(phi);
-  
+
   // Calculate probabilities
   const prob0 = Math.pow(Math.cos(theta / 2), 2);
   const prob1 = Math.pow(Math.sin(theta / 2), 2);
@@ -33,8 +33,8 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
 
   return (
     <Card className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-primary">Estado Cuántico Actual</h3>
-      
+      <h3 className="text-lg font-semibold text-primary">Estado cuántico actual</h3>
+
       {/* Quantum State */}
       <div>
         <h4 className="text-sm font-medium mb-2">Notación de Dirac</h4>
@@ -46,9 +46,12 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
       <Separator />
 
       {/* Coordinates */}
+
+      <h4 className="text-sm font-medium mb-2">Coordenadas </h4>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h4 className="text-sm font-medium mb-2">Coordenadas Esféricas</h4>
+          <h4 className="text-sm font-medium mb-2">Esféricas</h4>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">θ (theta):</span>
@@ -62,7 +65,7 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
         </div>
 
         <div>
-          <h4 className="text-sm font-medium mb-2">Coordenadas Cartesianas</h4>
+          <h4 className="text-sm font-medium mb-2">Cartesianas</h4>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">x:</span>
@@ -84,13 +87,13 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
 
       {/* Probabilities */}
       <div>
-        <h4 className="text-sm font-medium mb-2">Probabilidades de Medición</h4>
+        <h4 className="text-sm font-medium mb-2">Probabilidades de medición</h4>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">P(|0⟩) = |α|²:</span>
             <div className="flex items-center gap-2">
               <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-quantum-blue transition-all duration-300"
                   style={{ width: `${prob0 * 100}%` }}
                 />
@@ -98,12 +101,12 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
               <Badge variant="outline">{(prob0 * 100).toFixed(1)}%</Badge>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">P(|1⟩) = |β|²:</span>
             <div className="flex items-center gap-2">
               <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-quantum-purple transition-all duration-300"
                   style={{ width: `${prob1 * 100}%` }}
                 />

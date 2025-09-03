@@ -63,7 +63,7 @@ const Index = () => {
 
     setTheta(newTheta);
     setPhi(newPhi);
-    
+
     toast(`Compuerta ${gate} aplicada`, {
       description: `Nuevo estado: θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
     });
@@ -106,7 +106,7 @@ const Index = () => {
 
     setTheta(newTheta);
     setPhi(newPhi);
-    
+
     if (preset !== 'random') {
       toast(`Estado ${preset} aplicado`);
     } else {
@@ -137,21 +137,21 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-quantum bg-clip-text text-transparent">
-                Esfera de Bloch Interactiva
+                Esfera de Bloch
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Visualización y manipulación de estados cuánticos en tiempo real
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <a 
+              <a
                 href="../index.html"
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white h-9 px-3 shadow-md hover:shadow-lg"
                 style={{ textDecoration: 'none' }}
@@ -171,64 +171,69 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
-          
-          {/* 3D Visualization */}
-          <div className="lg:col-span-2">
-            <Card className="h-full p-4">
-              <div className="h-full">
-                <BlochSphere 
-                  theta={theta} 
-                  phi={phi} 
-                  className="h-full w-full"
-                  onStateChange={handleSphereClick}
-                />
-              </div>
-            </Card>
-          </div>
+      <main className="flex-1 bg-background">
+        <div className="container mx-auto px-4 py-6 min-h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 min-h-[calc(100vh-140px)]">
 
-          {/* Controls and Information */}
-          <div className="space-y-4 overflow-y-auto">
-            <Tabs defaultValue="controls" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="controls">Controles</TabsTrigger>
-                <TabsTrigger value="state">Estado</TabsTrigger>
-                <TabsTrigger value="theory">Teoría</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="controls" className="mt-4">
-                <QuantumControls
-                  onGateClick={applyGate}
-                  onPresetClick={applyPreset}
-                  onReset={handleReset}
-                  theta={theta}
-                  phi={phi}
-                  onRotationChange={handleRotationChange}
-                />
-              </TabsContent>
-              
-              <TabsContent value="state" className="mt-4">
-                <StateDisplay theta={theta} phi={phi} />
-              </TabsContent>
-              
-              <TabsContent value="theory" className="mt-4">
-                <QuantumEducation />
-              </TabsContent>
-            </Tabs>
+
+            {/* Estado Cuántico Actual - Izquierda */}
+            <div className="lg:col-span-2">
+              <Card className="h-full p-4">
+                <div className="h-full overflow-hidden">
+                  <StateDisplay theta={theta} phi={phi} />
+                </div>
+              </Card>
+            </div>
+
+            {/* Esfera de Bloch - Centro */}
+            <div className="lg:col-span-3">
+              <Card className="h-full p-4">
+                <div className="h-full">
+                  <BlochSphere
+                    theta={theta}
+                    phi={phi}
+                    className="h-full w-full"
+                    onStateChange={handleSphereClick}
+                  />
+                </div>
+              </Card>
+            </div>
+
+            {/* Controles y Teoría - Derecha */}
+            <div className="lg:col-span-2">
+              <Card className="h-full p-4">
+                <div className="h-full overflow-y-hidden">
+                  <Tabs defaultValue="controls" className="w-full h-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="controls">Controles</TabsTrigger>
+                      <TabsTrigger value="theory">Teoría</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="controls" className="mt-4 h-[calc(100%-2.5rem)]">
+                      <div className="h-full overflow-y-auto">
+                        <QuantumControls
+                          onGateClick={applyGate}
+                          onPresetClick={applyPreset}
+                          onReset={handleReset}
+                          theta={theta}
+                          phi={phi}
+                          onRotationChange={handleRotationChange}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="theory" className="mt-4 h-[calc(100%-2.5rem)]">
+                      <div className="h-full overflow-y-auto">
+                        <QuantumEducation />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-card/30 backdrop-blur-sm mt-8">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>Herramienta educativa para computación cuántica</p>
-            <p>Esfera de Bloch • Estados cuánticos • Compuertas</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

@@ -25,25 +25,25 @@ const gates = [
 const presets = [
   { name: '|0⟩', theta: 0, phi: 0, description: 'Ground state' },
   { name: '|1⟩', theta: Math.PI, phi: 0, description: 'Excited state' },
-  { name: '|+⟩', theta: Math.PI/2, phi: 0, description: 'Plus state' },
-  { name: '|-⟩', theta: Math.PI/2, phi: Math.PI, description: 'Minus state' },
-  { name: '|+i⟩', theta: Math.PI/2, phi: Math.PI/2, description: 'Plus i state' },
-  { name: '|-i⟩', theta: Math.PI/2, phi: -Math.PI/2, description: 'Minus i state' },
+  { name: '|+⟩', theta: Math.PI / 2, phi: 0, description: 'Plus state' },
+  { name: '|-⟩', theta: Math.PI / 2, phi: Math.PI, description: 'Minus state' },
+  { name: '|+i⟩', theta: Math.PI / 2, phi: Math.PI / 2, description: 'Plus i state' },
+  { name: '|-i⟩', theta: Math.PI / 2, phi: -Math.PI / 2, description: 'Minus i state' },
 ];
 
-export function QuantumControls({ 
-  onGateClick, 
-  onPresetClick, 
-  onReset, 
-  theta, 
+export function QuantumControls({
+  onGateClick,
+  onPresetClick,
+  onReset,
+  theta,
   phi,
-  onRotationChange 
+  onRotationChange
 }: QuantumControlsProps) {
   return (
     <div className="space-y-6">
       {/* Quantum Gates */}
       <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Compuertas Cuánticas</h3>
+        <h3 className="text-lg font-semibold mb-3 text-primary">Compuertas cuánticas</h3>
         <div className="grid grid-cols-2 gap-2">
           {gates.map((gate) => (
             <Button
@@ -66,8 +66,8 @@ export function QuantumControls({
 
       {/* Rotation Controls */}
       <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Rotaciones Parametrizadas</h3>
-        
+        <h3 className="text-lg font-semibold mb-3 text-primary">Rotaciones parametrizadas</h3>
+
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -85,7 +85,7 @@ export function QuantumControls({
               className="w-full"
             />
           </div>
-          
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-mono">φ (azimut)</span>
@@ -107,7 +107,7 @@ export function QuantumControls({
 
       {/* Preset States */}
       <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Estados Predefinidos</h3>
+        <h3 className="text-lg font-semibold mb-3 text-primary">Estados predefinidos</h3>
         <div className="grid grid-cols-2 gap-2">
           {presets.map((preset) => (
             <Button
@@ -127,15 +127,15 @@ export function QuantumControls({
 
       {/* Control Buttons */}
       <div className="flex gap-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onReset}
           className="flex-1"
         >
-          Reset
+          Reiniciar
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => onPresetClick('random')}
           className="flex-1"
         >
