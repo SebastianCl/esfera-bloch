@@ -39,7 +39,7 @@ export function StateDisplay({ theta, phi }: StateDisplayProps) {
       <div>
         <h4 className="text-sm font-medium mb-2">Notación de Dirac</h4>
         <div className="math-formula text-center py-2">
-          |ψ⟩ = {alpha.toFixed(3)}|0⟩ + {formatComplex(betaReal, betaImag)}|1⟩
+          |ψ⟩ = {alpha.toFixed(3)}|0⟩ + ({formatComplex(betaReal, betaImag)})|1⟩
         </div>
       </div>
 
