@@ -120,8 +120,10 @@ export function QuantumControls({
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-mono">α (desde {ket('zero', notation)})</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-sm">
+                  α (desde <span className="font-mono">{ket('zero', notation)}</span>)
+                </span>
+                <Badge variant="outline" className="text-xs font-mono tabular-nums">
                   {toDegrees(alpha)}°
                 </Badge>
               </div>
@@ -146,8 +148,8 @@ export function QuantumControls({
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-mono">θ (polar)</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-sm">θ (polar)</span>
+                <Badge variant="outline" className="text-xs font-mono tabular-nums">
                   {((theta * 180) / Math.PI).toFixed(1)}°
                 </Badge>
               </div>
@@ -164,8 +166,8 @@ export function QuantumControls({
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-mono">φ (azimut)</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-sm">φ (azimut)</span>
+                <Badge variant="outline" className="text-xs font-mono tabular-nums">
                   {((phi * 180) / Math.PI).toFixed(1)}°
                 </Badge>
               </div>

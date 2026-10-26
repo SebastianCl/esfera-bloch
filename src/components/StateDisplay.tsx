@@ -44,7 +44,7 @@ function ProbabilityBar({ label, value, colorClass }: { label: string; value: nu
         <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
           <div className={`h-full ${colorClass} transition-all duration-300`} style={{ width: `${value * 100}%` }} />
         </div>
-        <Badge variant="outline" className="w-16 justify-center">
+        <Badge variant="outline" className="w-16 justify-center font-mono tabular-nums">
           {percent(value)}
         </Badge>
       </div>
@@ -153,12 +153,15 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">θ (theta):</span>
-              <Badge variant="outline">{degrees(theta)}°</Badge>
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {degrees(theta)}°
+              </Badge>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">φ (phi):</span>
               <Badge
                 variant="outline"
+                className="font-mono tabular-nums"
                 title={atPole ? 'En los polos sin θ = 0: cualquier φ describe el mismo estado' : undefined}
               >
                 {atPole ? 'indefinida' : `${degrees(phi)}°`}
@@ -172,15 +175,21 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">x:</span>
-              <Badge variant="outline">{x.toFixed(3)}</Badge>
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {x.toFixed(3)}
+              </Badge>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">y:</span>
-              <Badge variant="outline">{y.toFixed(3)}</Badge>
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {y.toFixed(3)}
+              </Badge>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">z:</span>
-              <Badge variant="outline">{z.toFixed(3)}</Badge>
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {z.toFixed(3)}
+              </Badge>
             </div>
           </div>
         </div>
@@ -247,7 +256,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
       {/* Matriz de densidad */}
       <div>
         <h4 className="text-sm font-medium mb-1">Matriz de densidad</h4>
-        <p className="text-xs text-muted-foreground mb-2">ρ = |ψ⟩⟨ψ| = ½(I + r·σ)</p>
+        <p className="text-xs text-muted-foreground mb-2 font-mono">ρ = |ψ⟩⟨ψ| = ½(I + r·σ)</p>
         <div className="flex justify-center overflow-x-auto py-1">
           <MatrixView matrix={rho} format={formatComplex} className="text-[11px] leading-tight" />
         </div>

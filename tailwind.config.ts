@@ -18,6 +18,12 @@ export default {
 			}
 		},
 		extend: {
+			// Sans para la interfaz y la prosa; mono solo para fórmulas, kets y números
+			// (ver `.math-formula` en index.css y las clases `font-mono` en los componentes).
+			fontFamily: {
+				sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+				mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

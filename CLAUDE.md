@@ -53,6 +53,10 @@ Fase global: `amplitudes` en `src/lib/bloch.ts` fija α real ≥ 0 y, en los pol
 
 Tema oscuro por defecto definido como variables HSL en `src/index.css` (`:root` es el tema oscuro, `.light` el claro). `ThemeProvider` usa `attribute="class"` con `value={{ dark: 'theme-dark', light: 'light' }}`: la clase `light` activa el tema claro y el oscuro recibe una clase sin reglas a propósito, para no disparar las variantes `dark:` de los componentes de `ui/`. `ThemeToggle.tsx` alterna y `next-themes` lo persiste en localStorage. La escena 3D es transparente sobre `sphere-container`, así que `BlochSphere.tsx` lee `resolvedTheme` fuera del `Canvas` y pasa una paleta (`PALETTES`) a la escena. `tailwind.config.ts` expone colores `quantum-{blue,purple,cyan,magenta}`, `bg-gradient-quantum`, `shadow-glow` y animaciones `quantum-pulse`, `glow`. Clases utilitarias propias como `quantum-glow`, `math-formula` y `sphere-container` están en `index.css`.
 
+### Tipografía
+
+Sans (pila del sistema, `fontFamily.sans` en `tailwind.config.ts`) para interfaz y prosa; monoespaciada solo para fórmulas (`.math-formula`), kets en botones, badges y celdas de tabla, y valores numéricos (`font-mono tabular-nums` en los `Badge`). Dentro de un párrafo los kets van en la fuente del texto. El header solo lleva lo global: enlace al sitio, notación y tema; Reiniciar y Aleatorio están al pie de `QuantumControls`.
+
 ### Layout
 
 La rejilla de `Index.tsx` tiene altura fija de ventana solo en `lg` (`lg:h-[calc(100vh-140px)]`) y cada tarjeta hace scroll por dentro (`lg:min-h-0`, `lg:overflow-y-auto`). Por debajo de `lg` las tarjetas se apilan con altura natural, la esfera va primera (`order-first`) y ocupa `60vh`. Si tocas alturas, mantén esa separación: las utilidades de scroll interno llevan prefijo `lg:`.

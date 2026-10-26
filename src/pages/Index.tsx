@@ -5,9 +5,11 @@ import { StateDisplay } from '@/components/StateDisplay';
 import { QuantumEducation } from '@/components/QuantumEducation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Home } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   applyGate as applyGateToState,
@@ -176,14 +178,23 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-quantum bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-quantum bg-clip-text text-transparent">
                 Esfera de Bloch
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Visualización y manipulación de estados cuánticos en tiempo real
               </p>
             </div>
+            {/* Solo lo global: volver al sitio, notación y tema. Reiniciar y Aleatorio
+                viven en los controles, junto a los presets. */}
             <div className="flex flex-wrap items-center gap-2">
+              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                <a href="../index.html">
+                  <Home aria-hidden="true" />
+                  Inicio
+                </a>
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
               <ToggleGroup
                 type="single"
                 size="sm"
@@ -193,25 +204,11 @@ const Index = () => {
                 aria-label="Notación de los estados"
               >
                 {NOTATIONS.map((n) => (
-                  <ToggleGroupItem key={n} value={n} className="text-xs" title={NOTATION_NAMES[n]}>
+                  <ToggleGroupItem key={n} value={n} className="text-xs font-mono" title={NOTATION_NAMES[n]}>
                     {n === 'computacional' ? '|0⟩ |1⟩ |+⟩' : '|u⟩ |d⟩ |r⟩'}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-              <a
-                href="../index.html"
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white h-9 px-3 shadow-md hover:shadow-lg"
-                style={{ textDecoration: 'none' }}
-              >
-                <span className="mr-2">🏠</span>
-                Inicio
-              </a>
-              <Button variant="outline" size="sm" onClick={handleReset}>
-                Reiniciar
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => applyPreset('random')}>
-                Aleatorio
-              </Button>
               <ThemeToggle />
             </div>
           </div>
