@@ -3,7 +3,13 @@ import {
   applyGate,
   applyGateToVector,
   GATE_ROTATIONS,
+  KET_STATES,
+  circleAngleFromState,
+  isOnCircle,
+  measurementProbabilities,
+  projectToCircle,
   rotateAroundAxis,
+  stateFromCircleAngle,
   toBlochVector,
   toSpherical,
   type BlochVector,
@@ -168,5 +174,61 @@ describe('propiedades generales', () => {
   it('una compuerta desconocida deja el vector intacto', () => {
     const v = toBlochVector(1.1, 2.3);
     expect(applyGateToVector('Q', v)).toEqual(v);
+  });
+});
+
+describe('medición en las bases Z, X e Y', () => {
+  it('|0⟩ es certeza en Z y 50/50 en X e Y', () => {
+    const p = measurementProbabilities(toBlochVector(0, 0));
+    expect(p.z.plus).toBeCloseTo(1, 9);
+    expect(p.z.minus).toBeCloseTo(0, 9);
+    expect(p.x.plus).toBeCloseTo(0.5, 9);
+    expect(p.y.minus).toBeCloseTo(0.5, 9);
+  });
+
+  it('|+i⟩ es certeza en Y aunque sea 50/50 en Z: la fase importa en otras bases', () => {
+    const p = measurementProbabilities(toBlochVector(P / 2, P / 2));
+    expect(p.y.plus).toBeCloseTo(1, 9);
+    expect(p.z.plus).toBeCloseTo(0.5, 9);
+    expect(p.x.plus).toBeCloseTo(0.5, 9);
+  });
+
+  it('en la base Z coincide con |α|² y |β|²', () => {
+    const theta = 1.1;
+    const p = measurementProbabilities(toBlochVector(theta, 2.3));
+    expect(p.z.plus).toBeCloseTo(Math.cos(theta / 2) ** 2, 9);
+    expect(p.z.minus).toBeCloseTo(Math.sin(theta / 2) ** 2, 9);
+  });
+});
+
+describe('círculo de Bloch', () => {
+  it('α recorre |0⟩ → |+⟩ → |1⟩ → |−⟩', () => {
+    expect(circleAngleFromState(KET_STATES.zero)).toBeCloseTo(0, 9);
+    expect(circleAngleFromState(KET_STATES.plus)).toBeCloseTo(P / 2, 9);
+    expect(circleAngleFromState(KET_STATES.one)).toBeCloseTo(P, 9);
+    expect(circleAngleFromState(KET_STATES.minus)).toBeCloseTo((3 * P) / 2, 9);
+  });
+
+  it('stateFromCircleAngle invierte circleAngleFromState', () => {
+    for (const alpha of [0, 0.4, P / 2, 2.9, P, 4.0, (3 * P) / 2, 6.0]) {
+      expect(circleAngleFromState(stateFromCircleAngle(alpha))).toBeCloseTo(alpha, 9);
+    }
+    expectAngles(stateFromCircleAngle(4.0), { theta: 2 * P - 4.0, phi: P });
+  });
+
+  it('detecta y proyecta estados fuera del plano XZ', () => {
+    const plusI = toBlochVector(P / 2, P / 2);
+    expect(isOnCircle(plusI)).toBe(false);
+    expect(isOnCircle(toBlochVector(P / 3, 0))).toBe(true);
+    expectVector(projectToCircle({ x: 0.6, y: 0.8, z: 0 }), { x: 1, y: 0, z: 0 });
+    expectVector(projectToCircle(plusI), { x: 0, y: 0, z: 1 });
+  });
+
+  it('S saca del círculo a |+⟩ pero X, Z y H no', () => {
+    const plus = toBlochVector(P / 2, 0);
+    expect(isOnCircle(applyGateToVector('S', plus))).toBe(false);
+    for (const gate of ['X', 'Z', 'H']) {
+      expect(isOnCircle(applyGateToVector(gate, plus))).toBe(true);
+    }
   });
 });

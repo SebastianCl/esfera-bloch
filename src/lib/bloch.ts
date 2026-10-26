@@ -109,3 +109,72 @@ export const applyGateToVector = (gate: string, v: BlochVector): BlochVector => 
 /** Aplica una compuerta a un estado dado en esféricas. */
 export const applyGate = (gate: string, state: SphericalAngles): SphericalAngles =>
   toSpherical(applyGateToVector(gate, toBlochVector(state.theta, state.phi)));
+
+// ---------------------------------------------------------------------------
+// Medición en las tres bases
+// ---------------------------------------------------------------------------
+
+export interface BasisProbabilities {
+  /** Probabilidad del autoestado "+" del eje (|0⟩, |+⟩ o |+i⟩). */
+  plus: number;
+  /** Probabilidad del autoestado "−" del eje (|1⟩, |−⟩ o |−i⟩). */
+  minus: number;
+}
+
+/**
+ * Probabilidades de medir en las bases Z, X e Y. Para un vector de Bloch
+ * (x, y, z) la probabilidad del autoestado "+" de un eje es (1 + componente)/2.
+ * En la base Z coincide con |α|² y |β|².
+ */
+export const measurementProbabilities = (v: BlochVector): { z: BasisProbabilities; x: BasisProbabilities; y: BasisProbabilities } => {
+  const clamp = (p: number) => Math.max(0, Math.min(1, p));
+  return {
+    z: { plus: clamp((1 + v.z) / 2), minus: clamp((1 - v.z) / 2) },
+    x: { plus: clamp((1 + v.x) / 2), minus: clamp((1 - v.x) / 2) },
+    y: { plus: clamp((1 + v.y) / 2), minus: clamp((1 - v.y) / 2) },
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Círculo de Bloch (lección 30): estados con amplitudes reales, plano XZ
+// ---------------------------------------------------------------------------
+
+const TWO_PI = 2 * Math.PI;
+
+/** Un estado está sobre el círculo de Bloch cuando no tiene componente Y (fase real). */
+export const isOnCircle = (v: BlochVector): boolean => Math.abs(v.y) < 1e-9;
+
+/** Proyecta un vector al plano XZ y lo renormaliza. El eje Y se proyecta a |0⟩. */
+export const projectToCircle = (v: BlochVector): BlochVector => normalize({ x: v.x, y: 0, z: v.z });
+
+/**
+ * Ángulo α ∈ [0, 2π) sobre el círculo de Bloch, medido desde |0⟩ hacia |+⟩:
+ * x = sin α, z = cos α. Para un estado fuera del plano devuelve el ángulo de su proyección.
+ */
+export const circleAngleFromState = (state: SphericalAngles): number => {
+  const v = toBlochVector(state.theta, state.phi);
+  const alpha = Math.atan2(clean(v.x), clean(v.z));
+  return ((alpha % TWO_PI) + TWO_PI) % TWO_PI;
+};
+
+/** Inverso de circleAngleFromState: α ∈ [0, π] → φ = 0; α ∈ (π, 2π) → φ = π. */
+export const stateFromCircleAngle = (alpha: number): SphericalAngles => {
+  const a = ((alpha % TWO_PI) + TWO_PI) % TWO_PI;
+  return a <= Math.PI ? { theta: a, phi: 0 } : { theta: TWO_PI - a, phi: Math.PI };
+};
+
+// ---------------------------------------------------------------------------
+// Autoestados fundamentales
+// ---------------------------------------------------------------------------
+
+export type KetKey = 'zero' | 'one' | 'plus' | 'minus' | 'plusI' | 'minusI';
+
+/** Posición en esféricas de los seis autoestados de Sz, Sx y Sy. */
+export const KET_STATES: Record<KetKey, SphericalAngles> = {
+  zero: { theta: 0, phi: 0 },
+  one: { theta: Math.PI, phi: 0 },
+  plus: { theta: Math.PI / 2, phi: 0 },
+  minus: { theta: Math.PI / 2, phi: Math.PI },
+  plusI: { theta: Math.PI / 2, phi: Math.PI / 2 },
+  minusI: { theta: Math.PI / 2, phi: -Math.PI / 2 },
+};

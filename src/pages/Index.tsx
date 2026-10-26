@@ -1,14 +1,36 @@
 import { useRef, useState } from 'react';
-import { BlochSphere } from '@/components/BlochSphere';
+import { BlochSphere, type AppliedRotation } from '@/components/BlochSphere';
 import { QuantumControls } from '@/components/QuantumControls';
 import { StateDisplay } from '@/components/StateDisplay';
 import { QuantumEducation } from '@/components/QuantumEducation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { toast } from 'sonner';
-import { applyGate as applyGateToState, getGateRotation } from '@/lib/bloch';
-import type { AppliedRotation } from '@/components/BlochSphere';
+import {
+  applyGate as applyGateToState,
+  getGateRotation,
+  isOnCircle,
+  KET_STATES,
+  projectToCircle,
+  stateFromCircleAngle,
+  toBlochVector,
+  toSpherical,
+  type KetKey,
+  type SphericalAngles,
+} from '@/lib/bloch';
+import { ket, NOTATION_NAMES, NOTATIONS, type Notation } from '@/lib/notation';
+import { VIEW_MODES, type ViewMode } from '@/lib/modes';
+
+/** Una compuerta aplicada y el estado que había antes, para poder deshacerla. */
+export interface GateHistoryEntry {
+  gate: string;
+  from: SphericalAngles;
+}
+
+const degrees = (radians: number) => ((radians * 180) / Math.PI).toFixed(1);
+const describeState = (s: SphericalAngles) => `θ=${degrees(s.theta)}°, φ=${degrees(s.phi)}°`;
 
 const Index = () => {
   const [theta, setTheta] = useState(Math.PI / 3); // Initial state closer to |+⟩
@@ -17,92 +39,134 @@ const Index = () => {
   // Se pone en null cuando el estado cambia por otro medio (slider, click, preset).
   const [lastRotation, setLastRotation] = useState<AppliedRotation | null>(null);
   const rotationCounter = useRef(0);
+  const [notation, setNotation] = useState<Notation>('computacional');
+  const [mode, setMode] = useState<ViewMode>('libre');
+  // Secuencia de compuertas desde el último estado fijado a mano
+  const [history, setHistory] = useState<GateHistoryEntry[]>([]);
+
+  const setState = (next: SphericalAngles) => {
+    setTheta(next.theta);
+    setPhi(next.phi);
+  };
+
+  const animateRotation = (rotation: Omit<AppliedRotation, 'id'>) => {
+    rotationCounter.current += 1;
+    setLastRotation({ ...rotation, id: rotationCounter.current });
+  };
+
+  /** El estado cambió a mano: sin animación de compuerta y el circuito empieza de nuevo. */
+  const manualChange = (next: SphericalAngles) => {
+    setState(next);
+    setLastRotation(null);
+    setHistory([]);
+  };
+
+  /**
+   * En modo círculo (lección 30) solo caben amplitudes reales. Si una acción
+   * saca el estado del plano XZ, se explica la limitación y se pasa a la
+   * esfera completa (lección 31). Devuelve true si se salió del círculo.
+   */
+  const leaveCircleIfNeeded = (next: SphericalAngles, cause: string): boolean => {
+    if (mode !== 'circulo') return false;
+    if (isOnCircle(toBlochVector(next.theta, next.phi))) return false;
+    setMode('libre');
+    toast('El estado salió del círculo de Bloch', {
+      description: `${cause} introduce una fase imaginaria y el círculo no puede representarla. Hace falta el eje Y: la esfera completa.`,
+      duration: 7000,
+    });
+    return true;
+  };
 
   const applyGate = (gate: string) => {
     const rotation = getGateRotation(gate);
     if (!rotation) return;
 
-    const { theta: newTheta, phi: newPhi } = applyGateToState(gate, { theta, phi });
+    const from = { theta, phi };
+    const next = applyGateToState(gate, from);
+    setState(next);
+    animateRotation(rotation);
+    setHistory((h) => [...h, { gate, from }]);
 
-    setTheta(newTheta);
-    setPhi(newPhi);
-    rotationCounter.current += 1;
-    setLastRotation({ ...rotation, id: rotationCounter.current });
-
-    toast(`Compuerta ${gate} aplicada`, {
-      description: `Nuevo estado: θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
-    });
+    const left = leaveCircleIfNeeded(next, `La compuerta ${gate}`);
+    if (!left) {
+      toast(`Compuerta ${gate} aplicada`, {
+        description: `Rotación de ${degrees(rotation.angle)}° alrededor del ${rotation.axisLabel}. Nuevo estado: ${describeState(next)}`,
+      });
+    }
   };
 
-  const applyPreset = (preset: string) => {
-    let newTheta = 0;
-    let newPhi = 0;
+  const undoGate = () => {
+    const entry = history[history.length - 1];
+    if (!entry) return;
+    const rotation = getGateRotation(entry.gate);
+    setState(entry.from);
+    setHistory((h) => h.slice(0, -1));
+    if (rotation) {
+      // Deshacer es la rotación inversa: mismo eje, ángulo opuesto
+      animateRotation({ ...rotation, angle: -rotation.angle, name: `${entry.gate}⁻¹` });
+    }
+    toast(`Compuerta ${entry.gate} deshecha`, { description: `Estado: ${describeState(entry.from)}` });
+  };
 
-    switch (preset) {
-      case '|0⟩':
-        newTheta = 0;
-        newPhi = 0;
-        break;
-      case '|1⟩':
-        newTheta = Math.PI;
-        newPhi = 0;
-        break;
-      case '|+⟩':
-        newTheta = Math.PI / 2;
-        newPhi = 0;
-        break;
-      case '|-⟩':
-        newTheta = Math.PI / 2;
-        newPhi = Math.PI;
-        break;
-      case '|+i⟩':
-        newTheta = Math.PI / 2;
-        newPhi = Math.PI / 2;
-        break;
-      case '|-i⟩':
-        newTheta = Math.PI / 2;
-        newPhi = -Math.PI / 2;
-        break;
-      case 'random':
-        newTheta = Math.random() * Math.PI;
-        newPhi = (Math.random() - 0.5) * 2 * Math.PI;
-        break;
+  const clearHistory = () => {
+    setHistory([]);
+    toast('Circuito vaciado', { description: 'El estado actual se conserva como nuevo punto de partida.' });
+  };
+
+  const applyPreset = (preset: KetKey | 'random') => {
+    if (preset === 'random') {
+      const next =
+        mode === 'circulo'
+          ? stateFromCircleAngle(Math.random() * 2 * Math.PI)
+          : { theta: Math.random() * Math.PI, phi: (Math.random() - 0.5) * 2 * Math.PI };
+      manualChange(next);
+      toast('Estado aleatorio generado', { description: describeState(next) });
+      return;
     }
 
-    setTheta(newTheta);
-    setPhi(newPhi);
-    setLastRotation(null);
-
-    if (preset !== 'random') {
-      toast(`Estado ${preset} aplicado`);
-    } else {
-      toast('Estado aleatorio generado');
-    }
+    const next = KET_STATES[preset];
+    manualChange(next);
+    const left = leaveCircleIfNeeded(next, `El estado ${ket(preset, notation)}`);
+    if (!left) toast(`Estado ${ket(preset, notation)} aplicado`);
   };
 
   const handleReset = () => {
-    setTheta(0);
-    setPhi(0);
-    setLastRotation(null);
-    toast('Estado reiniciado a |0⟩');
+    manualChange(KET_STATES.zero);
+    toast(`Estado reiniciado a ${ket('zero', notation)}`);
   };
 
-  const handleRotationChange = (angle: 'theta' | 'phi', value: number) => {
-    if (angle === 'theta') {
-      setTheta(value);
+  const handleRotationChange = (angle: 'theta' | 'phi' | 'alpha', value: number) => {
+    if (angle === 'alpha') {
+      manualChange(stateFromCircleAngle(value));
+    } else if (angle === 'theta') {
+      manualChange({ theta: value, phi });
     } else {
-      setPhi(value);
+      manualChange({ theta, phi: value });
     }
-    setLastRotation(null);
   };
 
   const handleSphereClick = (newTheta: number, newPhi: number) => {
-    setTheta(newTheta);
-    setPhi(newPhi);
-    setLastRotation(null);
-    toast('Estado actualizado por click en la esfera', {
-      description: `θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
-    });
+    let next: SphericalAngles = { theta: newTheta, phi: newPhi };
+    if (mode === 'circulo') {
+      // En el círculo solo valen puntos del plano XZ: proyectar el click
+      next = toSpherical(projectToCircle(toBlochVector(newTheta, newPhi)));
+    }
+    manualChange(next);
+    toast('Estado actualizado por click en la esfera', { description: describeState(next) });
+  };
+
+  const handleModeChange = (next: ViewMode) => {
+    if (next === mode) return;
+    if (next === 'circulo') {
+      const v = toBlochVector(theta, phi);
+      if (!isOnCircle(v)) {
+        manualChange(toSpherical(projectToCircle(v)));
+        toast('Estado proyectado al círculo de Bloch', {
+          description: 'Se eliminó la componente Y (la fase imaginaria) para que el estado quepa en el plano XZ.',
+        });
+      }
+    }
+    setMode(next);
   };
 
   return (
@@ -110,7 +174,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-quantum bg-clip-text text-transparent">
                 Esfera de Bloch
@@ -119,7 +183,21 @@ const Index = () => {
                 Visualización y manipulación de estados cuánticos en tiempo real
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <ToggleGroup
+                type="single"
+                size="sm"
+                variant="outline"
+                value={notation}
+                onValueChange={(value) => value && setNotation(value as Notation)}
+                aria-label="Notación de los estados"
+              >
+                {NOTATIONS.map((n) => (
+                  <ToggleGroupItem key={n} value={n} className="text-xs" title={NOTATION_NAMES[n]}>
+                    {n === 'computacional' ? '|0⟩ |1⟩ |+⟩' : '|u⟩ |d⟩ |r⟩'}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
               <a
                 href="../index.html"
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white h-9 px-3 shadow-md hover:shadow-lg"
@@ -143,27 +221,47 @@ const Index = () => {
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-6 min-h-full">
           <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 min-h-[calc(100vh-140px)]">
-
-
             {/* Estado Cuántico Actual - Izquierda */}
             <div className="lg:col-span-2">
               <Card className="h-full p-4">
-                <div className="h-full overflow-hidden">
-                  <StateDisplay theta={theta} phi={phi} />
+                <div className="h-full overflow-y-auto">
+                  <StateDisplay theta={theta} phi={phi} notation={notation} />
                 </div>
               </Card>
             </div>
 
             {/* Esfera de Bloch - Centro */}
             <div className="lg:col-span-3">
-              <Card className="h-full p-4">
-                <div className="h-full">
+              <Card className="h-full p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <ToggleGroup
+                    type="single"
+                    size="sm"
+                    variant="outline"
+                    value={mode}
+                    onValueChange={(value) => value && handleModeChange(value as ViewMode)}
+                    aria-label="Modo de visualización"
+                  >
+                    {VIEW_MODES.map((m) => (
+                      <ToggleGroupItem key={m.value} value={m.value} className="text-xs" title={m.description}>
+                        {m.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                  <span className="text-xs text-muted-foreground">
+                    {VIEW_MODES.find((m) => m.value === mode)?.description}
+                  </span>
+                </div>
+                <div className="flex-1 min-h-[420px]">
                   <BlochSphere
                     theta={theta}
                     phi={phi}
                     className="h-full w-full"
                     onStateChange={handleSphereClick}
                     lastRotation={lastRotation}
+                    notation={notation}
+                    mode={mode}
+                    onUserOrbit={() => setMode('libre')}
                   />
                 </div>
               </Card>
@@ -188,13 +286,18 @@ const Index = () => {
                           theta={theta}
                           phi={phi}
                           onRotationChange={handleRotationChange}
+                          notation={notation}
+                          mode={mode}
+                          history={history.map((h) => h.gate)}
+                          onUndo={undoGate}
+                          onClearHistory={clearHistory}
                         />
                       </div>
                     </TabsContent>
 
                     <TabsContent value="theory" className="mt-4 h-[calc(100%-2.5rem)]">
                       <div className="h-full overflow-y-auto">
-                        <QuantumEducation />
+                        <QuantumEducation notation={notation} onSelectMode={handleModeChange} onPreset={applyPreset} />
                       </div>
                     </TabsContent>
                   </Tabs>

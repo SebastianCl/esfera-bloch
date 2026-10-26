@@ -1,8 +1,10 @@
-import { useRef, useMemo, useEffect, type ComponentRef } from 'react';
-import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
-import { OrbitControls, Text, Line } from '@react-three/drei';
+import { useRef, useMemo, useEffect, type ComponentRef, type ReactNode } from 'react';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import { OrbitControls, Text, Line, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
-import { toBlochVector, rotateAroundAxis, type BlochVector, type GateRotation } from '@/lib/bloch';
+import { toBlochVector, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
+import { ket, KET_INFO, type Notation } from '@/lib/notation';
+import type { ViewMode } from '@/lib/modes';
 
 /** Rotación aplicada por una compuerta, con un id único para distinguir aplicaciones sucesivas. */
 export interface AppliedRotation extends GateRotation {
@@ -16,6 +18,10 @@ interface BlochSphereProps {
   onStateChange?: (theta: number, phi: number) => void;
   /** Última compuerta aplicada; null si el estado cambió por slider, click o preset. */
   lastRotation?: AppliedRotation | null;
+  notation: Notation;
+  mode: ViewMode;
+  /** El usuario giró la cámara a mano en una vista fija (polo): la vista pasa a libre. */
+  onUserOrbit?: () => void;
 }
 
 // Mapeo física → Three.js. En física Z es vertical; en Three.js lo es Y.
@@ -31,6 +37,19 @@ const AXIS_HOLD = 1.5; // segundos que el eje sigue visible tras el arco
 const AXIS_FADE = 0.5; // segundos de desvanecimiento del eje
 const TRAIL_POINTS = 64;
 const FOLLOW_SPEED = 12; // suavizado al seguir sliders/clicks (mayor = más rápido)
+const CAMERA_SPEED = 4; // suavizado del cambio de cámara entre modos
+
+// Posiciones de cámara (coordenadas Three.js) por modo. OrbitControls usa
+// "arriba" = +Y de Three.js = +Z físico, así que:
+// - polo: casi sobre +Z físico; el pequeño desplazamiento en -X(Three) = -Y físico
+//   fija la orientación en pantalla: X físico a la derecha, Y físico arriba,
+//   como el plano complejo (real horizontal, imaginario vertical).
+// - circulo: desde -Y físico mirando al plano XZ: X a la derecha, Z arriba.
+const CAMERA_POSITIONS: Record<ViewMode, [number, number, number]> = {
+  libre: [3, 2, 3],
+  polo: [-0.08, 4, 0],
+  circulo: [-4, 0, 0],
+};
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -41,7 +60,88 @@ interface RotationAnimation {
   startTime: number | null;
 }
 
-function SphereVisualization({ theta, phi, onStateChange, lastRotation }: Omit<BlochSphereProps, 'className'>) {
+/** Etiqueta de texto que siempre mira a la cámara, posicionada en coordenadas físicas. */
+function Label({
+  at,
+  color,
+  size = 0.15,
+  children,
+}: {
+  at: BlochVector;
+  color: string;
+  size?: number;
+  children: ReactNode;
+}) {
+  return (
+    <Billboard position={toThree(at)}>
+      <Text fontSize={size} color={color} anchorX="center" anchorY="middle" textAlign="center">
+        {children}
+      </Text>
+    </Billboard>
+  );
+}
+
+/** Mueve la cámara al cambiar de modo y detecta cuándo el usuario toma el control. */
+function CameraRig({ mode, onUserOrbit }: { mode: ViewMode; onUserOrbit?: () => void }) {
+  const { camera } = useThree();
+  const target = useRef<THREE.Vector3 | null>(null);
+  const previousMode = useRef(mode);
+  const skipNextAnimation = useRef(false);
+
+  useEffect(() => {
+    if (mode === previousMode.current) return;
+    previousMode.current = mode;
+    if (skipNextAnimation.current) {
+      // El cambio vino de un giro manual: no mover la cámara
+      skipNextAnimation.current = false;
+      return;
+    }
+    target.current = new THREE.Vector3(...CAMERA_POSITIONS[mode]);
+  }, [mode]);
+
+  useFrame((_, delta) => {
+    const goal = target.current;
+    if (!goal) return;
+    // Interpolar dirección y radio por separado para no atravesar la esfera
+    const k = 1 - Math.exp(-delta * CAMERA_SPEED);
+    const radius = THREE.MathUtils.lerp(camera.position.length(), goal.length(), k);
+    const direction = camera.position.clone().normalize().lerp(goal.clone().normalize(), k);
+    if (direction.lengthSq() < 1e-6) direction.copy(UP);
+    camera.position.copy(direction.normalize().multiplyScalar(radius));
+    if (camera.position.distanceTo(goal) < 0.01) {
+      camera.position.copy(goal);
+      target.current = null;
+    }
+  });
+
+  const handleStart = () => {
+    target.current = null; // el usuario toma el control
+    if (mode === 'polo' && onUserOrbit) {
+      skipNextAnimation.current = true;
+      onUserOrbit();
+    }
+  };
+
+  return (
+    <OrbitControls
+      enablePan={true}
+      enableZoom={true}
+      enableRotate={true}
+      minDistance={2}
+      maxDistance={8}
+      onStart={handleStart}
+    />
+  );
+}
+
+function SphereVisualization({
+  theta,
+  phi,
+  onStateChange,
+  lastRotation,
+  notation,
+  mode,
+}: Omit<BlochSphereProps, 'className' | 'onUserOrbit'>) {
   const sphereRef = useRef<THREE.Mesh>(null);
   const arrowRef = useRef<THREE.Group>(null);
   const axisGroupRef = useRef<THREE.Group>(null);
@@ -84,8 +184,8 @@ function SphereVisualization({ theta, phi, onStateChange, lastRotation }: Omit<B
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastRotation?.id]);
 
-  // Giro suave y decorativo de la malla
   useFrame((state, delta) => {
+    // Giro suave y decorativo de la malla
     if (sphereRef.current) {
       sphereRef.current.rotation.y = state.clock.elapsedTime * 0.1;
     }
@@ -160,15 +260,24 @@ function SphereVisualization({ theta, phi, onStateChange, lastRotation }: Omit<B
     return [tip.clone().multiplyScalar(-1.4), tip.clone().multiplyScalar(1.4)];
   }, [lastRotation]);
 
+  const isCircle = mode === 'circulo';
+  const isPole = mode === 'polo';
+
+  // Etiqueta de un autoestado del ecuador. Desde el polo se añade su valor
+  // en el plano complejo (+1, −1, +i, −i), como en la lección 31.
+  const equatorLabel = (key: KetKey) => (isPole ? `${ket(key, notation)}\n${KET_INFO[key].complex}` : ket(key, notation));
+
+  const STATE_COLOR = '#C084FC';
+
   return (
     <>
       <ambientLight intensity={0.6} />
       <pointLight position={[10, 10, 10]} intensity={1} />
 
-      {/* Malla de la esfera */}
+      {/* Malla de la esfera (atenuada en modo círculo) */}
       <mesh ref={sphereRef} position={[0, 0, 0]} onClick={handleSphereClick}>
         <sphereGeometry args={[1, 32, 16]} />
-        <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={0.3} />
+        <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={isCircle ? 0.1 : 0.3} />
       </mesh>
 
       {/* Esfera invisible para capturar clicks de forma estable */}
@@ -179,26 +288,50 @@ function SphereVisualization({ theta, phi, onStateChange, lastRotation }: Omit<B
 
       {/* Ejes físicos X (rojo), Y (verde), Z (azul) ya mapeados a Three.js */}
       <Line points={[toThree({ x: -1.5, y: 0, z: 0 }), toThree({ x: 1.5, y: 0, z: 0 })]} color="#EF4444" lineWidth={2} />
-      <Line points={[toThree({ x: 0, y: -1.5, z: 0 }), toThree({ x: 0, y: 1.5, z: 0 })]} color="#10B981" lineWidth={2} />
+      {!isCircle && (
+        <Line points={[toThree({ x: 0, y: -1.5, z: 0 }), toThree({ x: 0, y: 1.5, z: 0 })]} color="#10B981" lineWidth={2} />
+      )}
       <Line points={[toThree({ x: 0, y: 0, z: -1.5 }), toThree({ x: 0, y: 0, z: 1.5 })]} color="#3B82F6" lineWidth={2} />
 
-      <Text position={toThree({ x: 1.7, y: 0, z: 0 })} fontSize={0.2} color="#EF4444" anchorX="center" anchorY="middle">
+      <Label at={{ x: 1.7, y: 0, z: 0 }} color="#EF4444" size={0.2}>
         X
-      </Text>
-      <Text position={toThree({ x: 0, y: 1.7, z: 0 })} fontSize={0.2} color="#10B981" anchorX="center" anchorY="middle">
-        Y
-      </Text>
-      <Text position={toThree({ x: 0, y: 0, z: 1.7 })} fontSize={0.2} color="#3B82F6" anchorX="center" anchorY="middle">
-        Z
-      </Text>
+      </Label>
+      {!isCircle && (
+        <Label at={{ x: 0, y: 1.7, z: 0 }} color="#10B981" size={0.2}>
+          Y
+        </Label>
+      )}
+      {!isPole && (
+        <Label at={{ x: 0, y: 0, z: 1.7 }} color="#3B82F6" size={0.2}>
+          Z
+        </Label>
+      )}
 
-      {/* |0⟩ en el polo norte (z = +1), |1⟩ en el polo sur */}
-      <Text position={toThree({ x: 0, y: 0, z: 1.3 })} fontSize={0.15} color="#A855F7" anchorX="center" anchorY="middle">
-        |0⟩
-      </Text>
-      <Text position={toThree({ x: 0, y: 0, z: -1.3 })} fontSize={0.15} color="#A855F7" anchorX="center" anchorY="middle">
-        |1⟩
-      </Text>
+      {/* Los seis autoestados: Sz en los polos, Sx y Sy en el ecuador */}
+      <Label at={{ x: 0, y: 0, z: 1.25 }} color={STATE_COLOR}>
+        {ket('zero', notation)}
+      </Label>
+      {!isPole && (
+        <Label at={{ x: 0, y: 0, z: -1.25 }} color={STATE_COLOR}>
+          {ket('one', notation)}
+        </Label>
+      )}
+      <Label at={{ x: 1.25, y: 0, z: 0.12 }} color={STATE_COLOR}>
+        {equatorLabel('plus')}
+      </Label>
+      <Label at={{ x: -1.25, y: 0, z: 0.12 }} color={STATE_COLOR}>
+        {equatorLabel('minus')}
+      </Label>
+      {!isCircle && (
+        <>
+          <Label at={{ x: 0, y: 1.25, z: 0.12 }} color={STATE_COLOR}>
+            {equatorLabel('plusI')}
+          </Label>
+          <Label at={{ x: 0, y: -1.25, z: 0.12 }} color={STATE_COLOR}>
+            {equatorLabel('minusI')}
+          </Label>
+        </>
+      )}
 
       {/* Vector de estado: flecha a lo largo de +Y local, orientada por cuaternión en cada frame */}
       <group ref={arrowRef}>
@@ -244,33 +377,53 @@ function SphereVisualization({ theta, phi, onStateChange, lastRotation }: Omit<B
             opacity={1}
             depthTest={false}
           />
-          <Text
-            position={axisPoints[1].clone().multiplyScalar(1.12)}
-            fontSize={0.11}
-            color="#FCD34D"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {`${lastRotation.name}: ${lastRotation.axisLabel}`}
-          </Text>
+          <Billboard position={axisPoints[1].clone().multiplyScalar(1.12)}>
+            <Text fontSize={0.11} color="#FCD34D" anchorX="center" anchorY="middle">
+              {`${lastRotation.name}: ${lastRotation.axisLabel}`}
+            </Text>
+          </Billboard>
         </group>
       )}
 
       {/* Ecuador: plano XY físico, horizontal en pantalla */}
       <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.98, 1.02, 64]} />
-        <meshBasicMaterial color="#A855F7" transparent opacity={0.2} side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#A855F7" transparent opacity={isCircle ? 0.08 : 0.2} side={THREE.DoubleSide} />
       </mesh>
+
+      {/* Círculo de Bloch: plano XZ físico (x = 0 en Three.js), resaltado en modo círculo */}
+      {isCircle && (
+        <mesh position={[0, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <ringGeometry args={[0.985, 1.015, 96]} />
+          <meshBasicMaterial color="#FCD34D" transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
+      )}
     </>
   );
 }
 
-export function BlochSphere({ theta, phi, className = '', onStateChange, lastRotation }: BlochSphereProps) {
+export function BlochSphere({
+  theta,
+  phi,
+  className = '',
+  onStateChange,
+  lastRotation,
+  notation,
+  mode,
+  onUserOrbit,
+}: BlochSphereProps) {
   return (
     <div className={`sphere-container rounded-xl ${className}`}>
-      <Canvas camera={{ position: [3, 2, 3], fov: 50 }} style={{ height: '100%', width: '100%' }}>
-        <SphereVisualization theta={theta} phi={phi} onStateChange={onStateChange} lastRotation={lastRotation} />
-        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} minDistance={2} maxDistance={8} />
+      <Canvas camera={{ position: CAMERA_POSITIONS.libre, fov: 50 }} style={{ height: '100%', width: '100%' }}>
+        <SphereVisualization
+          theta={theta}
+          phi={phi}
+          onStateChange={onStateChange}
+          lastRotation={lastRotation}
+          notation={notation}
+          mode={mode}
+        />
+        <CameraRig mode={mode} onUserOrbit={onUserOrbit} />
       </Canvas>
     </div>
   );
