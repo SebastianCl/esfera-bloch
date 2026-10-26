@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { BlochSphere } from '@/components/BlochSphere';
 import { QuantumControls } from '@/components/QuantumControls';
 import { StateDisplay } from '@/components/StateDisplay';
@@ -7,79 +7,27 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-
-// Vector de Bloch en convención física (Z vertical, |0⟩ en z=+1)
-interface BlochVector {
-  x: number;
-  y: number;
-  z: number;
-}
-
-const toBlochVector = (theta: number, phi: number): BlochVector => ({
-  x: Math.sin(theta) * Math.cos(phi),
-  y: Math.sin(theta) * Math.sin(phi),
-  z: Math.cos(theta),
-});
-
-// Elimina residuos de punto flotante (p. ej. 6e-17 o -0) para que
-// atan2/acos y la pantalla no muestren valores como "-0.0°"
-const clean = (value: number): number => (Math.abs(value) < 1e-12 ? 0 : value);
-
-// Vuelve a esféricas: θ ∈ [0, π], φ ∈ (-π, π]. En los polos φ queda en 0.
-const toSpherical = (v: BlochVector): { theta: number; phi: number } => {
-  const x = clean(v.x);
-  const y = clean(v.y);
-  const z = clean(v.z);
-  const theta = Math.acos(Math.max(-1, Math.min(1, z)));
-  let phi = Math.atan2(y, x);
-  if (Math.abs(phi + Math.PI) < 1e-9) phi = Math.PI;
-  return { theta, phi };
-};
-
-// Rotación de ángulo `angle` alrededor del eje Z
-const rotateZ = (v: BlochVector, angle: number): BlochVector => ({
-  x: v.x * Math.cos(angle) - v.y * Math.sin(angle),
-  y: v.x * Math.sin(angle) + v.y * Math.cos(angle),
-  z: v.z,
-});
-
-// Cada compuerta de un qubit es una rotación de la esfera de Bloch.
-// Se aplica sobre el vector cartesiano y luego se vuelve a θ/φ.
-const applyGateToVector = (gate: string, v: BlochVector): BlochVector => {
-  switch (gate) {
-    case 'X':
-      // Rotación π alrededor de X: (x, y, z) → (x, -y, -z)
-      return { x: v.x, y: -v.y, z: -v.z };
-    case 'Y':
-      // Rotación π alrededor de Y: (x, y, z) → (-x, y, -z)
-      return { x: -v.x, y: v.y, z: -v.z };
-    case 'Z':
-      // Rotación π alrededor de Z: (x, y, z) → (-x, -y, z)
-      return { x: -v.x, y: -v.y, z: v.z };
-    case 'H':
-      // Rotación π alrededor del eje (X+Z)/√2: intercambia x↔z e invierte y
-      return { x: v.z, y: -v.y, z: v.x };
-    case 'S':
-      // Rotación π/2 alrededor de Z
-      return rotateZ(v, Math.PI / 2);
-    case 'T':
-      // Rotación π/4 alrededor de Z
-      return rotateZ(v, Math.PI / 4);
-    default:
-      return v;
-  }
-};
+import { applyGate as applyGateToState, getGateRotation } from '@/lib/bloch';
+import type { AppliedRotation } from '@/components/BlochSphere';
 
 const Index = () => {
   const [theta, setTheta] = useState(Math.PI / 3); // Initial state closer to |+⟩
   const [phi, setPhi] = useState(0);
+  // Última compuerta aplicada: la esfera la usa para animar el arco y mostrar el eje.
+  // Se pone en null cuando el estado cambia por otro medio (slider, click, preset).
+  const [lastRotation, setLastRotation] = useState<AppliedRotation | null>(null);
+  const rotationCounter = useRef(0);
 
   const applyGate = (gate: string) => {
-    const rotated = applyGateToVector(gate, toBlochVector(theta, phi));
-    const { theta: newTheta, phi: newPhi } = toSpherical(rotated);
+    const rotation = getGateRotation(gate);
+    if (!rotation) return;
+
+    const { theta: newTheta, phi: newPhi } = applyGateToState(gate, { theta, phi });
 
     setTheta(newTheta);
     setPhi(newPhi);
+    rotationCounter.current += 1;
+    setLastRotation({ ...rotation, id: rotationCounter.current });
 
     toast(`Compuerta ${gate} aplicada`, {
       description: `Nuevo estado: θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
@@ -123,6 +71,7 @@ const Index = () => {
 
     setTheta(newTheta);
     setPhi(newPhi);
+    setLastRotation(null);
 
     if (preset !== 'random') {
       toast(`Estado ${preset} aplicado`);
@@ -134,20 +83,23 @@ const Index = () => {
   const handleReset = () => {
     setTheta(0);
     setPhi(0);
+    setLastRotation(null);
     toast('Estado reiniciado a |0⟩');
   };
 
-  const handleRotationChange = (axis: string, value: number) => {
-    if (axis === 'x') {
+  const handleRotationChange = (angle: 'theta' | 'phi', value: number) => {
+    if (angle === 'theta') {
       setTheta(value);
-    } else if (axis === 'y') {
+    } else {
       setPhi(value);
     }
+    setLastRotation(null);
   };
 
   const handleSphereClick = (newTheta: number, newPhi: number) => {
     setTheta(newTheta);
     setPhi(newPhi);
+    setLastRotation(null);
     toast('Estado actualizado por click en la esfera', {
       description: `θ=${(newTheta * 180 / Math.PI).toFixed(1)}°, φ=${(newPhi * 180 / Math.PI).toFixed(1)}°`
     });
@@ -211,6 +163,7 @@ const Index = () => {
                     phi={phi}
                     className="h-full w-full"
                     onStateChange={handleSphereClick}
+                    lastRotation={lastRotation}
                   />
                 </div>
               </Card>

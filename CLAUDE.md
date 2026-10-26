@@ -14,9 +14,10 @@ pnpm build        # build de producción a dist/
 pnpm build:dev    # build en modo development
 pnpm lint         # eslint .
 pnpm preview      # sirve dist/
+pnpm test         # vitest run (solo src/lib/bloch.test.ts por ahora)
 ```
 
-No hay tests ni script de typecheck. `pnpm build` no corre `tsc`; para verificar tipos usa `npx tsc -p tsconfig.app.json --noEmit`.
+No hay script de typecheck. `pnpm build` no corre `tsc`; para verificar tipos usa `npx tsc -p tsconfig.app.json --noEmit`. `.claude/launch.json` define la configuración `dev` para levantar el servidor desde el navegador integrado de Claude.
 
 Hay tres lockfiles (`pnpm-lock.yaml`, `package-lock.json`, `bun.lockb`). `pnpm-workspace.yaml` y `pnpm.overrides` en `package.json` indican que pnpm es el gestor en uso; no regeneres los otros lockfiles.
 
@@ -24,18 +25,19 @@ Hay tres lockfiles (`pnpm-lock.yaml`, `package-lock.json`, `bun.lockb`). `pnpm-w
 
 Toda la lógica de la app vive en un solo estado: `theta` y `phi` (ángulos esféricos, en radianes) en `src/pages/Index.tsx`. Esa página es el único lugar donde se transforma el estado; los componentes son presentacionales y reciben `theta`/`phi` más callbacks.
 
-- `src/pages/Index.tsx`: dueño del estado. Implementa `applyGate` (X, Y, Z, H, S, T como transformaciones directas sobre θ/φ, no como matrices unitarias; la Hadamard es una aproximación por casos), `applyPreset` (|0⟩, |1⟩, |+⟩, |-⟩, |+i⟩, |-i⟩, random), reset, sliders y click en la esfera. Cada acción dispara un toast de `sonner`.
-- `src/components/BlochSphere.tsx`: `Canvas` de react-three-fiber con `OrbitControls`. Convierte θ/φ a cartesianas y maneja el click sobre la esfera invirtiendo esa conversión.
+- `src/lib/bloch.ts`: matemática pura del qubit, sin React. Conversión θ/φ ↔ vector de Bloch, rotación de Rodrigues y el catálogo `GATE_ROTATIONS`, que define cada compuerta (X, Y, Z, H, S, T) como eje unitario + ángulo de rotación. `applyGate` ahí es la única implementación de las compuertas. Tiene tests en `bloch.test.ts`.
+- `src/pages/Index.tsx`: dueño del estado. `applyGate` delega en `@/lib/bloch` y además guarda `lastRotation` (la compuerta aplicada, con un id incremental) para que la esfera anime el arco; cualquier otro cambio de estado (preset, reset, slider, click) pone `lastRotation` en null. `applyPreset` (|0⟩, |1⟩, |+⟩, |-⟩, |+i⟩, |-i⟩, random) sigue siendo un `switch` local. Cada acción dispara un toast de `sonner`.
+- `src/components/BlochSphere.tsx`: `Canvas` de react-three-fiber con `OrbitControls`. El vector dibujado se actualiza en `useFrame`, no por React: si llega una `lastRotation`, recorre el arco de la rotación desde el estado previo (0.9 s) y muestra el eje de rotación con su etiqueta durante 1.5 s más; si no, sigue al estado real con suavizado exponencial (slerp). Maneja el click sobre la esfera invirtiendo el mapeo de ejes.
 - `src/components/StateDisplay.tsx`: deriva de θ/φ la notación de Dirac, coordenadas cartesianas, probabilidades y fase relativa. Solo cálculo y render.
-- `src/components/QuantumControls.tsx`: botones de compuertas y presets, sliders de θ y φ. Las listas `gates` y `presets` son los catálogos; para añadir una compuerta hay que tocar aquí y el `switch` de `applyGate` en `Index.tsx`.
+- `src/components/QuantumControls.tsx`: botones de compuertas y presets, sliders de θ y φ. Los sliders trabajan en grados enteros (θ 0–180, φ -180–180) y convierten a radianes en el callback. Las listas `gates` y `presets` son los catálogos; para añadir una compuerta hay que tocar aquí y `GATE_ROTATIONS` en `src/lib/bloch.ts`.
 - `src/components/QuantumEducation.tsx`: acordeón de teoría, contenido estático.
 - `src/components/ui/`: shadcn/ui completo tal como lo generó Lovable. La mayoría no se usa; no lo borres ni lo edites a mano, regenera con la CLI de shadcn si hace falta (`components.json` define los alias).
 
 ### Convención de ejes (importante)
 
-Se usa la convención de física: Z vertical, |0⟩ en el polo norte (z=+1), |1⟩ en el polo sur. Three.js tiene Y vertical, así que `BlochSphere.tsx` mapea física→Three.js como `(x, y, z) → (x, z, y)`: el eje Z físico se dibuja sobre el Y de Three.js y el Y físico sobre el Z de Three.js. Las etiquetas de ejes en pantalla ya reflejan el mapeo. `StateDisplay.tsx` calcula las cartesianas en convención física sin mapeo. Al tocar cualquier cálculo geométrico, respeta esta separación.
+Se usa la convención de física: Z vertical, |0⟩ en el polo norte (z=+1), |1⟩ en el polo sur. Three.js tiene Y vertical, así que `BlochSphere.tsx` mapea física→Three.js con `toThree`/`fromThree` como `(x, y, z) → (y, z, x)`, una permutación cíclica. No uses el intercambio simple `(x, z, y)`: es una reflexión, deja una terna izquierda en pantalla (X × Y = -Z) e invierte el sentido de giro de las compuertas. Todo lo que se dibuja (ejes, etiquetas, eje de rotación, arco) pasa por `toThree`. `src/lib/bloch.ts` y `StateDisplay.tsx` trabajan en convención física sin mapeo. Al tocar cualquier cálculo geométrico, respeta esta separación.
 
-Rangos: θ ∈ [0, π], φ se normaliza a (-π, π] en `applyGate`. El slider de θ en `QuantumControls.tsx` permite hasta 2π, pero `applyGate` lo recorta a [0, π].
+Rangos: θ ∈ [0, π], φ ∈ (-π, π], garantizados por `toSpherical` en `src/lib/bloch.ts` (usa `atan2(√(x²+y²), z)` y no `acos(z)` porque `acos` pierde precisión cerca de los polos). Los sliders de `QuantumControls.tsx` respetan esos rangos.
 
 ### Routing y proveedores
 

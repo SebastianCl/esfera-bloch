@@ -10,8 +10,11 @@ interface QuantumControlsProps {
   onReset: () => void;
   theta: number;
   phi: number;
-  onRotationChange: (axis: string, value: number) => void;
+  onRotationChange: (angle: 'theta' | 'phi', value: number) => void;
 }
+
+const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 const gates = [
   { name: 'X', description: 'Pauli-X (Bit flip)', color: 'bg-red-500' },
@@ -76,12 +79,13 @@ export function QuantumControls({
                 {(theta * 180 / Math.PI).toFixed(1)}°
               </Badge>
             </div>
+            {/* El slider trabaja en grados enteros para que los valores sean exactos (90°, 180°) */}
             <Slider
-              value={[theta]}
-              onValueChange={(value) => onRotationChange('x', value[0])}
-              max={2 * Math.PI}
+              value={[toDegrees(theta)]}
+              onValueChange={(value) => onRotationChange('theta', toRadians(value[0]))}
+              max={180}
               min={0}
-              step={0.1}
+              step={1}
               className="w-full"
             />
           </div>
@@ -94,11 +98,11 @@ export function QuantumControls({
               </Badge>
             </div>
             <Slider
-              value={[phi]}
-              onValueChange={(value) => onRotationChange('y', value[0])}
-              max={2 * Math.PI}
-              min={-Math.PI}
-              step={0.1}
+              value={[toDegrees(phi)]}
+              onValueChange={(value) => onRotationChange('phi', toRadians(value[0]))}
+              max={180}
+              min={-180}
+              step={1}
               className="w-full"
             />
           </div>
