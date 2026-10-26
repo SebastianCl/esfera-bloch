@@ -8,58 +8,75 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
+// Vector de Bloch en convención física (Z vertical, |0⟩ en z=+1)
+interface BlochVector {
+  x: number;
+  y: number;
+  z: number;
+}
+
+const toBlochVector = (theta: number, phi: number): BlochVector => ({
+  x: Math.sin(theta) * Math.cos(phi),
+  y: Math.sin(theta) * Math.sin(phi),
+  z: Math.cos(theta),
+});
+
+// Elimina residuos de punto flotante (p. ej. 6e-17 o -0) para que
+// atan2/acos y la pantalla no muestren valores como "-0.0°"
+const clean = (value: number): number => (Math.abs(value) < 1e-12 ? 0 : value);
+
+// Vuelve a esféricas: θ ∈ [0, π], φ ∈ (-π, π]. En los polos φ queda en 0.
+const toSpherical = (v: BlochVector): { theta: number; phi: number } => {
+  const x = clean(v.x);
+  const y = clean(v.y);
+  const z = clean(v.z);
+  const theta = Math.acos(Math.max(-1, Math.min(1, z)));
+  let phi = Math.atan2(y, x);
+  if (Math.abs(phi + Math.PI) < 1e-9) phi = Math.PI;
+  return { theta, phi };
+};
+
+// Rotación de ángulo `angle` alrededor del eje Z
+const rotateZ = (v: BlochVector, angle: number): BlochVector => ({
+  x: v.x * Math.cos(angle) - v.y * Math.sin(angle),
+  y: v.x * Math.sin(angle) + v.y * Math.cos(angle),
+  z: v.z,
+});
+
+// Cada compuerta de un qubit es una rotación de la esfera de Bloch.
+// Se aplica sobre el vector cartesiano y luego se vuelve a θ/φ.
+const applyGateToVector = (gate: string, v: BlochVector): BlochVector => {
+  switch (gate) {
+    case 'X':
+      // Rotación π alrededor de X: (x, y, z) → (x, -y, -z)
+      return { x: v.x, y: -v.y, z: -v.z };
+    case 'Y':
+      // Rotación π alrededor de Y: (x, y, z) → (-x, y, -z)
+      return { x: -v.x, y: v.y, z: -v.z };
+    case 'Z':
+      // Rotación π alrededor de Z: (x, y, z) → (-x, -y, z)
+      return { x: -v.x, y: -v.y, z: v.z };
+    case 'H':
+      // Rotación π alrededor del eje (X+Z)/√2: intercambia x↔z e invierte y
+      return { x: v.z, y: -v.y, z: v.x };
+    case 'S':
+      // Rotación π/2 alrededor de Z
+      return rotateZ(v, Math.PI / 2);
+    case 'T':
+      // Rotación π/4 alrededor de Z
+      return rotateZ(v, Math.PI / 4);
+    default:
+      return v;
+  }
+};
+
 const Index = () => {
   const [theta, setTheta] = useState(Math.PI / 3); // Initial state closer to |+⟩
   const [phi, setPhi] = useState(0);
 
   const applyGate = (gate: string) => {
-    let newTheta = theta;
-    let newPhi = phi;
-
-    switch (gate) {
-      case 'X':
-        // Pauli-X: flip around X-axis
-        newTheta = Math.PI - theta;
-        newPhi = phi + Math.PI;
-        break;
-      case 'Y':
-        // Pauli-Y: flip around Y-axis
-        newTheta = Math.PI - theta;
-        newPhi = -phi;
-        break;
-      case 'Z':
-        // Pauli-Z: phase flip
-        newPhi = phi + Math.PI;
-        break;
-      case 'H':
-        // Hadamard: complex transformation
-        if (Math.abs(theta) < 0.1) {
-          // |0⟩ → |+⟩
-          newTheta = Math.PI / 2;
-          newPhi = 0;
-        } else if (Math.abs(theta - Math.PI) < 0.1) {
-          // |1⟩ → |-⟩
-          newTheta = Math.PI / 2;
-          newPhi = Math.PI;
-        } else {
-          // Apply Hadamard transformation
-          newTheta = Math.PI / 2;
-          newPhi = phi;
-        }
-        break;
-      case 'S':
-        // S gate: phase by π/2
-        newPhi = phi + Math.PI / 2;
-        break;
-      case 'T':
-        // T gate: phase by π/4
-        newPhi = phi + Math.PI / 4;
-        break;
-    }
-
-    // Normalize angles
-    newPhi = ((newPhi + Math.PI) % (2 * Math.PI)) - Math.PI;
-    newTheta = Math.max(0, Math.min(Math.PI, newTheta));
+    const rotated = applyGateToVector(gate, toBlochVector(theta, phi));
+    const { theta: newTheta, phi: newPhi } = toSpherical(rotated);
 
     setTheta(newTheta);
     setPhi(newPhi);
