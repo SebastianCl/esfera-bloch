@@ -11,6 +11,7 @@ import {
   GATE_UNITARIES,
   isPole,
   KET_STATES,
+  ketKeyOf,
   circleAngleFromState,
   isOnCircle,
   measurementProbabilities,
@@ -433,5 +434,27 @@ describe('estado aleatorio uniforme (Haar)', () => {
     expect(randomState(sequence(0.5, 0)).phi).toBeCloseTo(P, 9);
     expect(randomState(sequence(0.5, 0.75)).phi).toBeCloseTo(-P / 2, 9);
     expect(randomState(sequence(0.5, 0.999999)).phi).toBeGreaterThan(-P);
+  });
+});
+
+describe('ketKeyOf', () => {
+  it('reconoce los seis autoestados', () => {
+    expect(ketKeyOf(KET_0)).toBe('zero');
+    expect(ketKeyOf(KET_1)).toBe('one');
+    expect(ketKeyOf(KET_PLUS)).toBe('plus');
+    expect(ketKeyOf(KET_MINUS)).toBe('minus');
+    expect(ketKeyOf(KET_PLUS_I)).toBe('plusI');
+    expect(ketKeyOf(KET_MINUS_I)).toBe('minusI');
+  });
+
+  it('en los polos cualquier φ es el mismo autoestado', () => {
+    expect(ketKeyOf({ theta: 0, phi: 2.3 })).toBe('zero');
+    expect(ketKeyOf({ theta: P, phi: -1.1 })).toBe('one');
+  });
+
+  it('devuelve null para un estado intermedio y tolera residuos numéricos', () => {
+    expect(ketKeyOf({ theta: P / 3, phi: 0 })).toBeNull();
+    expect(ketKeyOf({ theta: P / 2 + 1e-9, phi: 1e-9 })).toBe('plus');
+    expect(ketKeyOf(applyGate('H', KET_0))).toBe('plus');
   });
 });

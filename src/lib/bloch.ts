@@ -194,6 +194,21 @@ export const KET_STATES: Record<KetKey, SphericalAngles> = {
   minusI: { theta: Math.PI / 2, phi: -Math.PI / 2 },
 };
 
+const KET_KEY_LIST: KetKey[] = ['zero', 'one', 'plus', 'minus', 'plusI', 'minusI'];
+
+/**
+ * Autoestado al que corresponde un estado, o null si no es ninguno de los seis.
+ * Compara vectores de Bloch, así que en los polos vale cualquier φ.
+ */
+export const ketKeyOf = (state: SphericalAngles, tolerance = 1e-6): KetKey | null => {
+  const v = toBlochVector(state.theta, state.phi);
+  for (const key of KET_KEY_LIST) {
+    const k = KET_STATES[key];
+    if (angleBetween(v, toBlochVector(k.theta, k.phi)) < tolerance) return key;
+  }
+  return null;
+};
+
 // ---------------------------------------------------------------------------
 // Espacio de Hilbert: amplitudes, matriz de densidad y compuertas como matrices
 // ---------------------------------------------------------------------------

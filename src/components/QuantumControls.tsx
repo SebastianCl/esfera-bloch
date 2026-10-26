@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from 'next-themes';
+import { Trash2, Undo2 } from 'lucide-react';
 import { GateIcon } from '@/components/GateIcon';
-import { GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
+import { GATE_ROTATIONS, ketKeyOf, type KetKey, type SphericalAngles } from '@/lib/bloch';
 import { axisColor } from '@/lib/colors';
 import { ket, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
@@ -19,11 +19,19 @@ interface QuantumControlsProps {
   mode: ViewMode;
   /** Compuertas aplicadas desde el último estado fijado a mano, en orden. */
   history: string[];
+  /** Estado del que partió el circuito (antes de la primera compuerta). */
+  initialState?: SphericalAngles;
   onUndo: () => void;
   onClearHistory: () => void;
 }
 
 const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
+
+/** Nombre del estado inicial del circuito: su ket si es un autoestado, si no sus ángulos. */
+const describeInitial = (state: SphericalAngles, notation: Notation): string => {
+  const key = ketKeyOf(state);
+  return key ? ket(key, notation) : `(θ ${toDegrees(state.theta)}°, φ ${toDegrees(state.phi)}°)`;
+};
 
 /** Compuertas por grupo. El eje, el ángulo y el color salen de GATE_ROTATIONS y colors.ts. */
 const GATE_GROUPS: { label: string; gates: { name: string; description: string }[] }[] = [
@@ -52,6 +60,7 @@ export function QuantumControls({
   notation,
   mode,
   history,
+  initialState,
   onUndo,
   onClearHistory,
 }: QuantumControlsProps) {
@@ -115,24 +124,41 @@ export function QuantumControls({
       {/* Circuit history */}
       <section>
         <h4 className={`${SECTION_LABEL} mb-3`}>Circuito aplicado</h4>
-        {history.length === 0 ? (
+        {history.length === 0 || !initialState ? (
           <p className="text-xs text-muted-foreground">Aplica una compuerta para empezar el circuito.</p>
         ) : (
-          <div className="flex flex-wrap items-center gap-1 font-mono text-sm">
-            {history.map((gate, index) => (
-              <span key={`${gate}-${index}`} className="flex items-center gap-1">
-                {index > 0 && <span className="text-muted-foreground">→</span>}
-                <Badge variant="secondary">{gate}</Badge>
-              </span>
-            ))}
+          /* Hilo de circuito: estado inicial, compuertas en orden y estado final */
+          <div className="overflow-x-auto">
+            <div className="flex items-center min-w-max py-1 font-mono text-sm">
+              <span className="shrink-0 pr-1">{describeInitial(initialState, notation)}</span>
+              {history.map((gate, index) => {
+                const rotation = GATE_ROTATIONS[gate];
+                return (
+                  <span key={`${gate}-${index}`} className="flex items-center">
+                    <span className="h-px w-4 bg-border" aria-hidden="true" />
+                    {/* La letra va en el color del texto: el borde en el color del eje solo identifica */}
+                    <span
+                      className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border-2 bg-card px-1.5 font-bold"
+                      style={rotation ? { borderColor: axisColor(rotation.axis, theme) } : undefined}
+                    >
+                      {gate}
+                    </span>
+                  </span>
+                );
+              })}
+              <span className="h-px w-4 bg-border" aria-hidden="true" />
+              <span className="shrink-0 pl-1 text-muted-foreground">|ψ⟩</span>
+            </div>
           </div>
         )}
         <div className="flex gap-2 mt-3">
           <Button variant="outline" size="sm" className="flex-1" onClick={onUndo} disabled={history.length === 0}>
+            <Undo2 aria-hidden="true" />
             Deshacer última
           </Button>
           <Button variant="ghost" size="sm" className="flex-1" onClick={onClearHistory} disabled={history.length === 0}>
-            Vaciar
+            <Trash2 aria-hidden="true" />
+            Vaciar circuito
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">

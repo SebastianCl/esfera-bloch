@@ -298,6 +298,7 @@ const Index = () => {
                           notation={notation}
                           mode={mode}
                           history={history.map((h) => h.gate)}
+                          initialState={history[0]?.from}
                           onUndo={undoGate}
                           onClearHistory={clearHistory}
                         />
