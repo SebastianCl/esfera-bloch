@@ -19,6 +19,7 @@ import { formatComplex } from '@/lib/format';
 import { ket, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 import { PANEL_TITLE, SECTION_LABEL } from '@/lib/styles';
+import { AXIS_COLORS } from '@/lib/colors';
 
 interface StateDisplayProps {
   theta: number;
@@ -78,7 +79,7 @@ function AngleSlider({
 }
 
 /** Barra vertical de una probabilidad; el valor y el ket van en texto, el color solo identifica la base. */
-function ProbabilityColumn({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
+function ProbabilityColumn({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-[11px] font-mono tabular-nums">{percent(value)}</span>
@@ -87,7 +88,10 @@ function ProbabilityColumn({ label, value, colorClass }: { label: string; value:
         role="img"
         aria-label={`P(${label}) = ${percent(value)}`}
       >
-        <div className={`w-full ${colorClass} rounded-t transition-all duration-300`} style={{ height: `${value * 100}%` }} />
+        <div
+          className="w-full rounded-t transition-all duration-300"
+          style={{ height: `${value * 100}%`, backgroundColor: color }}
+        />
       </div>
       <span className="text-[11px] font-mono text-muted-foreground">{label}</span>
     </div>
@@ -100,33 +104,33 @@ function BasisBlock({
   probabilities,
   plusLabel,
   minusLabel,
-  colorClass,
   angle,
 }: {
   title: string;
-  axis: string;
+  /** Eje de la base; fija el color, el mismo que en la esfera y en las compuertas. */
+  axis: 'z' | 'x' | 'y';
   probabilities: BasisProbabilities;
   plusLabel: string;
   minusLabel: string;
-  colorClass: string;
   /** Ángulo θ_B entre la flecha y el autoestado "+" del eje: P(+) = cos²(θ_B/2). */
   angle: number;
 }) {
+  const color = AXIS_COLORS[axis];
   return (
     <div className="flex items-center gap-3">
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
-          <span className={`inline-block w-2 h-2 rounded-full ${colorClass}`} aria-hidden="true" />
+          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
           <span className="text-xs font-medium text-foreground">{title}</span>
-          <span className="text-xs text-muted-foreground">eje {axis}</span>
+          <span className="text-xs text-muted-foreground">eje {axis.toUpperCase()}</span>
         </div>
         <p className="text-[11px] text-muted-foreground">
           Ángulo con {plusLabel}: {degrees(angle)}° → cos²({degrees(angle / 2)}°) = {percent(probabilities.plus)}
         </p>
       </div>
       <div className="flex gap-2 shrink-0">
-        <ProbabilityColumn label={plusLabel} value={probabilities.plus} colorClass={colorClass} />
-        <ProbabilityColumn label={minusLabel} value={probabilities.minus} colorClass={colorClass} />
+        <ProbabilityColumn label={plusLabel} value={probabilities.plus} color={color} />
+        <ProbabilityColumn label={minusLabel} value={probabilities.minus} color={color} />
       </div>
     </div>
   );
@@ -279,29 +283,26 @@ export function StateDisplay({ theta, phi, notation, mode, onRotationChange }: S
         <div className="space-y-3">
           <BasisBlock
             title="Base Z (computacional)"
-            axis="Z"
+            axis="z"
             probabilities={probabilities.z}
             plusLabel={k0}
             minusLabel={k1}
-            colorClass="bg-quantum-blue"
             angle={angleBetween(v, AXES.z)}
           />
           <BasisBlock
             title="Base X"
-            axis="X"
+            axis="x"
             probabilities={probabilities.x}
             plusLabel={ket('plus', notation)}
             minusLabel={ket('minus', notation)}
-            colorClass="bg-red-500"
             angle={angleBetween(v, AXES.x)}
           />
           <BasisBlock
             title="Base Y"
-            axis="Y"
+            axis="y"
             probabilities={probabilities.y}
             plusLabel={ket('plusI', notation)}
             minusLabel={ket('minusI', notation)}
-            colorClass="bg-emerald-500"
             angle={angleBetween(v, AXES.y)}
           />
         </div>

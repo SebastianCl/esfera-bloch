@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { toBlochVector, toSpherical, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
 import { ket, KET_INFO, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
+import { AXIS_COLORS } from '@/lib/colors';
 import { COARSE_POINTER_QUERY, DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 
 /** Rotación aplicada por una compuerta, con un id único para distinguir aplicaciones sucesivas. */
@@ -342,22 +343,22 @@ function SphereVisualization({
       </mesh>
 
       {/* Ejes físicos X (rojo), Y (verde), Z (azul) ya mapeados a Three.js */}
-      <Line points={[toThree({ x: -1.5, y: 0, z: 0 }), toThree({ x: 1.5, y: 0, z: 0 })]} color="#EF4444" lineWidth={2} />
+      <Line points={[toThree({ x: -1.5, y: 0, z: 0 }), toThree({ x: 1.5, y: 0, z: 0 })]} color={AXIS_COLORS.x} lineWidth={2} />
       {!isCircle && (
-        <Line points={[toThree({ x: 0, y: -1.5, z: 0 }), toThree({ x: 0, y: 1.5, z: 0 })]} color="#10B981" lineWidth={2} />
+        <Line points={[toThree({ x: 0, y: -1.5, z: 0 }), toThree({ x: 0, y: 1.5, z: 0 })]} color={AXIS_COLORS.y} lineWidth={2} />
       )}
-      <Line points={[toThree({ x: 0, y: 0, z: -1.5 }), toThree({ x: 0, y: 0, z: 1.5 })]} color="#3B82F6" lineWidth={2} />
+      <Line points={[toThree({ x: 0, y: 0, z: -1.5 }), toThree({ x: 0, y: 0, z: 1.5 })]} color={AXIS_COLORS.z} lineWidth={2} />
 
-      <Label at={{ x: 1.7, y: 0, z: 0 }} color="#EF4444" size={0.2}>
+      <Label at={{ x: 1.7, y: 0, z: 0 }} color={AXIS_COLORS.x} size={0.2}>
         X
       </Label>
       {!isCircle && (
-        <Label at={{ x: 0, y: 1.7, z: 0 }} color="#10B981" size={0.2}>
+        <Label at={{ x: 0, y: 1.7, z: 0 }} color={AXIS_COLORS.y} size={0.2}>
           Y
         </Label>
       )}
       {!isPole && (
-        <Label at={{ x: 0, y: 0, z: 1.7 }} color="#3B82F6" size={0.2}>
+        <Label at={{ x: 0, y: 0, z: 1.7 }} color={AXIS_COLORS.z} size={0.2}>
           Z
         </Label>
       )}

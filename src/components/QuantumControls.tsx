@@ -2,7 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTheme } from 'next-themes';
+import { GateIcon } from '@/components/GateIcon';
 import { GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
+import { axisColor } from '@/lib/colors';
 import { ket, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 import { SECTION_LABEL } from '@/lib/styles';
@@ -22,13 +25,24 @@ interface QuantumControlsProps {
 
 const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
 
-const gates = [
-  { name: 'X', description: 'Pauli-X (inversión de bit)', color: 'bg-red-500' },
-  { name: 'Y', description: 'Pauli-Y (inversión de bit y de fase)', color: 'bg-green-500' },
-  { name: 'Z', description: 'Pauli-Z (inversión de fase)', color: 'bg-blue-500' },
-  { name: 'H', description: 'Hadamard', color: 'bg-purple-500' },
-  { name: 'S', description: 'Fase π/2', color: 'bg-cyan-500' },
-  { name: 'T', description: 'Fase π/4', color: 'bg-amber-500' },
+/** Compuertas por grupo. El eje, el ángulo y el color salen de GATE_ROTATIONS y colors.ts. */
+const GATE_GROUPS: { label: string; gates: { name: string; description: string }[] }[] = [
+  {
+    label: 'Pauli',
+    gates: [
+      { name: 'X', description: 'Pauli-X (inversión de bit)' },
+      { name: 'Y', description: 'Pauli-Y (inversión de bit y de fase)' },
+      { name: 'Z', description: 'Pauli-Z (inversión de fase)' },
+    ],
+  },
+  {
+    label: 'Superposición y fase',
+    gates: [
+      { name: 'H', description: 'Hadamard' },
+      { name: 'S', description: 'Fase π/2' },
+      { name: 'T', description: 'Fase π/4' },
+    ],
+  },
 ];
 
 export function QuantumControls({
@@ -42,47 +56,57 @@ export function QuantumControls({
   onClearHistory,
 }: QuantumControlsProps) {
   const isCircle = mode === 'circulo';
+  // Letras e iconos en el color del eje: en tema claro, la variante más oscura (3:1 sobre blanco)
+  const { resolvedTheme } = useTheme();
+  const theme = resolvedTheme === 'light' ? 'light' : 'dark';
 
   // Sin Card propia por sección: la tarjeta la pone Index.tsx y una tarjeta dentro
   // de otra solo resta ancho. Las secciones van separadas por Separator, como en StateDisplay.
   return (
     <div className="space-y-5">
       {/* Quantum Gates */}
-      <section>
-        <h4 className={`${SECTION_LABEL} mb-3`}>Compuertas</h4>
-        {/* Tres columnas cuando la tarjeta va a todo el ancho; dos en la columna estrecha de lg */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
-          {gates.map((gate) => {
-            const rotation = GATE_ROTATIONS[gate.name];
-            return (
-              <Tooltip key={gate.name}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="quantum-glow transition-all duration-300 hover:scale-105"
-                    onClick={() => onGateClick(gate.name)}
-                    aria-label={`${gate.name}: ${gate.description}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${gate.color}`} />
-                      <span className="font-mono font-bold">{gate.name}</span>
-                    </div>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-56">
-                  <p className="font-medium">{gate.description}</p>
-                  <p className="text-muted-foreground">
-                    Rotación de <span className="font-mono tabular-nums">{toDegrees(rotation.angle)}°</span> alrededor
-                    del {rotation.axisLabel}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Cada compuerta es una rotación de la esfera: su eje y ángulo aparecen al pasar el cursor y en el aviso al
-          aplicarla.
+      <section className="space-y-3">
+        <h4 className={SECTION_LABEL}>Compuertas</h4>
+        {GATE_GROUPS.map((group) => (
+          <div key={group.label} className="space-y-2">
+            <h5 className="text-sm font-medium">{group.label}</h5>
+            {/* Siempre tres columnas: cada grupo es una fila, también en la columna estrecha de lg */}
+            <div className="grid grid-cols-3 gap-2">
+              {group.gates.map((gate) => {
+                const rotation = GATE_ROTATIONS[gate.name];
+                return (
+                  <Tooltip key={gate.name}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="quantum-glow h-14 justify-between px-2.5 transition-all duration-300 hover:scale-105"
+                        onClick={() => onGateClick(gate.name)}
+                        aria-label={`${gate.name}: ${gate.description}`}
+                      >
+                        {/* text-xl bold es texto grande: basta 3:1 con el color del eje */}
+                        <span className="font-mono text-xl font-bold" style={{ color: axisColor(rotation.axis, theme) }}>
+                          {gate.name}
+                        </span>
+                        {/* El Button de shadcn fuerza los svg a size-4; el icono necesita su tamaño */}
+                        <GateIcon rotation={rotation} theme={theme} className="!size-9 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-56">
+                      <p className="font-medium">{gate.description}</p>
+                      <p className="text-muted-foreground">
+                        Rotación de <span className="font-mono tabular-nums">{toDegrees(rotation.angle)}°</span>{' '}
+                        alrededor del {rotation.axisLabel}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground">
+          Cada compuerta es una rotación de la esfera: el icono muestra su eje y el ángulo girado, con el color del eje
+          en la esfera. Eje y ángulo exactos al pasar el cursor y en el aviso al aplicarla.
         </p>
       </section>
 
