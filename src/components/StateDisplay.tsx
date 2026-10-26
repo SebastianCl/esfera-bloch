@@ -17,6 +17,7 @@ import { cabs2 } from '@/lib/complex';
 import { formatComplex } from '@/lib/format';
 import { ket, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
+import { PANEL_TITLE, SECTION_LABEL } from '@/lib/styles';
 
 interface StateDisplayProps {
   theta: number;
@@ -110,11 +111,11 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
   // Sin Card propia: la tarjeta la pone Index.tsx, y un marco dentro de otro solo resta ancho en móvil
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-primary">Estado cuántico actual</h3>
+      <h3 className={PANEL_TITLE}>Estado cuántico</h3>
 
       {/* Notación de Dirac */}
       <div>
-        <h4 className="text-sm font-medium mb-2">Notación de Dirac</h4>
+        <h4 className={`${SECTION_LABEL} mb-2`}>Notación de Dirac</h4>
         <div className="math-formula text-center py-2">
           |ψ⟩ = {formatComplex(alpha)}
           {k0} + ({formatComplex(beta)}){k1}
@@ -145,11 +146,11 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
       <Separator />
 
       {/* Coordenadas */}
-      <h4 className="text-sm font-medium mb-2">Coordenadas</h4>
+      <h4 className={`${SECTION_LABEL} mb-2`}>Coordenadas</h4>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h4 className="text-sm font-medium mb-2">Esféricas</h4>
+          <h5 className="text-sm font-medium mb-2">Esféricas</h5>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">θ (theta):</span>
@@ -171,7 +172,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
         </div>
 
         <div>
-          <h4 className="text-sm font-medium mb-2">Cartesianas</h4>
+          <h5 className="text-sm font-medium mb-2">Cartesianas</h5>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">x:</span>
@@ -199,7 +200,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
 
       {/* Probabilidades en las tres bases */}
       <div>
-        <h4 className="text-sm font-medium mb-1">Probabilidades de medición</h4>
+        <h4 className={`${SECTION_LABEL} mb-1`}>Probabilidades de medición</h4>
         <p className="text-xs text-muted-foreground mb-3">
           Regla de Born en cada eje: P(+) = (1 + r·n̂)/2 = cos²(θ_B/2), con θ_B el ángulo entre la flecha y el
           autoestado. Ortogonal significa antípoda (180°), no 90°: a 90° la probabilidad es 50 %. La fase φ no cambia
@@ -240,7 +241,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
 
       {/* Fase relativa */}
       <div>
-        <h4 className="text-sm font-medium mb-2">Fase relativa</h4>
+        <h4 className={`${SECTION_LABEL} mb-2`}>Fase relativa</h4>
         <div className="math-formula text-center py-2">
           e^(iφ) = {atPole ? 'indefinida' : formatComplex({ re: Math.cos(phi), im: Math.sin(phi) })}
         </div>
@@ -255,7 +256,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
 
       {/* Matriz de densidad */}
       <div>
-        <h4 className="text-sm font-medium mb-1">Matriz de densidad</h4>
+        <h4 className={`${SECTION_LABEL} mb-1`}>Matriz de densidad</h4>
         <p className="text-xs text-muted-foreground mb-2 font-mono">ρ = |ψ⟩⟨ψ| = ½(I + r·σ)</p>
         <div className="flex justify-center overflow-x-auto py-1">
           <MatrixView matrix={rho} format={formatComplex} className="text-[11px] leading-tight" />

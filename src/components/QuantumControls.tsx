@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -7,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { circleAngleFromState, GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
 import { ket, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
+import { SECTION_LABEL } from '@/lib/styles';
 
 interface QuantumControlsProps {
   onGateClick: (gate: string) => void;
@@ -52,11 +52,13 @@ export function QuantumControls({
   const isCircle = mode === 'circulo';
   const alpha = circleAngleFromState({ theta, phi });
 
+  // Sin Card propia por sección: la tarjeta la pone Index.tsx y una tarjeta dentro
+  // de otra solo resta ancho. Las secciones van separadas por Separator, como en StateDisplay.
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Quantum Gates */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Compuertas cuánticas</h3>
+      <section>
+        <h4 className={`${SECTION_LABEL} mb-3`}>Compuertas</h4>
         {/* Tres columnas cuando la tarjeta va a todo el ancho; dos en la columna estrecha de lg */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
           {gates.map((gate) => {
@@ -87,15 +89,17 @@ export function QuantumControls({
             );
           })}
         </div>
-        <div className="mt-3 text-xs text-muted-foreground">
+        <p className="mt-3 text-xs text-muted-foreground">
           Cada compuerta es una rotación de la esfera: su eje y ángulo aparecen al pasar el cursor y en el aviso al
           aplicarla.
-        </div>
-      </Card>
+        </p>
+      </section>
+
+      <Separator />
 
       {/* Circuit history */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Circuito aplicado</h3>
+      <section>
+        <h4 className={`${SECTION_LABEL} mb-3`}>Circuito aplicado</h4>
         {history.length === 0 ? (
           <p className="text-xs text-muted-foreground">Aplica una compuerta para empezar el circuito.</p>
         ) : (
@@ -116,14 +120,14 @@ export function QuantumControls({
             Vaciar
           </Button>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">Mover el estado a mano empieza un circuito nuevo.</div>
-      </Card>
+        <p className="mt-2 text-xs text-muted-foreground">Mover el estado a mano empieza un circuito nuevo.</p>
+      </section>
+
+      <Separator />
 
       {/* Rotation Controls */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">
-          {isCircle ? 'Ángulo en el círculo' : 'Ángulos esféricos'}
-        </h3>
+      <section>
+        <h4 className={`${SECTION_LABEL} mb-3`}>{isCircle ? 'Ángulo en el círculo' : 'Ángulos esféricos'}</h4>
 
         {isCircle ? (
           <div className="space-y-3">
@@ -191,11 +195,13 @@ export function QuantumControls({
             </div>
           </div>
         )}
-      </Card>
+      </section>
+
+      <Separator />
 
       {/* Preset States */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 text-primary">Estados predefinidos</h3>
+      <section>
+        <h4 className={`${SECTION_LABEL} mb-3`}>Estados predefinidos</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
           {KET_KEYS.map((key) => {
             const leavesCircle = isCircle && (key === 'plusI' || key === 'minusI');
@@ -218,7 +224,7 @@ export function QuantumControls({
             {ket('plusI', notation)} y {ket('minusI', notation)} están fuera del plano: elegirlos abre la esfera completa.
           </p>
         )}
-      </Card>
+      </section>
 
       <Separator />
 

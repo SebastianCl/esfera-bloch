@@ -51,10 +51,9 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
   const i = ket('plusI', notation);
   const o = ket('minusI', notation);
 
-  // Sin Card propia: la tarjeta la pone Index.tsx
+  // Sin Card propia ni título: la tarjeta la pone Index.tsx y el título es la pestaña
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-1 text-primary">Teoría</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Siguiendo las lecciones 30 (<em>Píntame el estado</em>) y 31 (<em>La esfera de Bloch</em>) del curso Mundo
         Cuántico.
