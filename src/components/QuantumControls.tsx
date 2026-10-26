@@ -27,9 +27,9 @@ const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 const gates = [
-  { name: 'X', description: 'Pauli-X (bit flip)', color: 'bg-red-500' },
-  { name: 'Y', description: 'Pauli-Y', color: 'bg-green-500' },
-  { name: 'Z', description: 'Pauli-Z (phase flip)', color: 'bg-blue-500' },
+  { name: 'X', description: 'Pauli-X (inversión de bit)', color: 'bg-red-500' },
+  { name: 'Y', description: 'Pauli-Y (inversión de bit y de fase)', color: 'bg-green-500' },
+  { name: 'Z', description: 'Pauli-Z (inversión de fase)', color: 'bg-blue-500' },
   { name: 'H', description: 'Hadamard', color: 'bg-purple-500' },
   { name: 'S', description: 'Fase π/2', color: 'bg-cyan-500' },
   { name: 'T', description: 'Fase π/4', color: 'bg-amber-500' },

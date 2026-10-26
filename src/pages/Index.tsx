@@ -15,6 +15,7 @@ import {
   isOnCircle,
   KET_STATES,
   projectToCircle,
+  randomState,
   stateFromCircleAngle,
   toBlochVector,
   toSpherical,
@@ -116,10 +117,8 @@ const Index = () => {
 
   const applyPreset = (preset: KetKey | 'random') => {
     if (preset === 'random') {
-      const next =
-        mode === 'circulo'
-          ? stateFromCircleAngle(Math.random() * 2 * Math.PI)
-          : { theta: Math.random() * Math.PI, phi: (Math.random() - 0.5) * 2 * Math.PI };
+      // Uniforme sobre la esfera (Haar: cos θ uniforme, no θ); en el círculo basta α uniforme
+      const next = mode === 'circulo' ? stateFromCircleAngle(Math.random() * 2 * Math.PI) : randomState();
       manualChange(next);
       toast('Estado aleatorio generado', { description: describeState(next) });
       return;
@@ -229,7 +228,7 @@ const Index = () => {
             <div className="lg:col-span-2 lg:min-h-0">
               <Card className="h-full p-4">
                 <div className="lg:h-full lg:overflow-y-auto">
-                  <StateDisplay theta={theta} phi={phi} notation={notation} />
+                  <StateDisplay theta={theta} phi={phi} notation={notation} mode={mode} />
                 </div>
               </Card>
             </div>

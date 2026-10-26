@@ -1,20 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import {
+  amplitudes,
+  angleBetween,
   applyGate,
   applyGateToVector,
+  applyMatrix,
+  densityMatrix,
+  fidelity,
   GATE_ROTATIONS,
+  GATE_UNITARIES,
+  isPole,
   KET_STATES,
   circleAngleFromState,
   isOnCircle,
   measurementProbabilities,
+  normalize,
   projectToCircle,
+  purity,
+  randomState,
   rotateAroundAxis,
+  rotationMatrix,
+  spinorToBlochVector,
   stateFromCircleAngle,
   toBlochVector,
   toSpherical,
   type BlochVector,
   type SphericalAngles,
 } from './bloch';
+import { cconj, cexp, cmul, IDENTITY, matAdjoint, matMul, matScale, PAULI, trace, type Complex, type Matrix2 } from './complex';
 
 const P = Math.PI;
 
@@ -230,5 +243,195 @@ describe('círculo de Bloch', () => {
     for (const gate of ['X', 'Z', 'H']) {
       expect(isOnCircle(applyGateToVector(gate, plus))).toBe(true);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Espacio de Hilbert: amplitudes, matrices, matriz de densidad
+// ---------------------------------------------------------------------------
+
+const expectComplex = (got: Complex, want: Complex) => {
+  expect(got.re).toBeCloseTo(want.re, 9);
+  expect(got.im).toBeCloseTo(want.im, 9);
+};
+
+const expectMatrix = (got: Matrix2, want: Matrix2) => {
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) expectComplex(got[i][j], want[i][j]);
+  }
+};
+
+const Z_AXIS: BlochVector = { x: 0, y: 0, z: 1 };
+const X_AXIS: BlochVector = { x: 1, y: 0, z: 0 };
+const Y_AXIS: BlochVector = { x: 0, y: 1, z: 0 };
+
+// Polos, ecuador y dos estados genéricos con y ≠ 0 (un error de conjugación invertiría y)
+const SAMPLE_STATES: SphericalAngles[] = [KET_0, KET_1, KET_PLUS, KET_PLUS_I, { theta: 1.1, phi: 2.3 }, { theta: 0.4, phi: -1.9 }];
+
+describe('amplitudes y espinor', () => {
+  it('|ψ⟩ = cos(θ/2)|0⟩ + e^{iφ} sin(θ/2)|1⟩ con α real y ≥ 0', () => {
+    const { alpha, beta } = amplitudes({ theta: 1.1, phi: 2.3 });
+    expectComplex(alpha, { re: Math.cos(0.55), im: 0 });
+    expectComplex(beta, { re: Math.sin(0.55) * Math.cos(2.3), im: Math.sin(0.55) * Math.sin(2.3) });
+  });
+
+  it('en los polos ignora φ: ahí sería una fase global', () => {
+    const north = amplitudes({ theta: 0, phi: 0.65 });
+    expectComplex(north.alpha, { re: 1, im: 0 });
+    expectComplex(north.beta, { re: 0, im: 0 });
+    const south = amplitudes({ theta: P, phi: 0.65 });
+    expectComplex(south.alpha, { re: 0, im: 0 });
+    expectComplex(south.beta, { re: 1, im: 0 });
+  });
+
+  it('spinorToBlochVector invierte amplitudes', () => {
+    for (const s of SAMPLE_STATES) {
+      expectVector(spinorToBlochVector(amplitudes(s)), toBlochVector(s.theta, s.phi));
+    }
+  });
+
+  it('isPole detecta θ = 0 y θ = π', () => {
+    expect(isPole(0)).toBe(true);
+    expect(isPole(P)).toBe(true);
+    expect(isPole(1e-12)).toBe(true);
+    expect(isPole(P / 2)).toBe(false);
+    expect(isPole(0.01)).toBe(false);
+  });
+});
+
+describe('compuertas como matrices: SU(2) y SO(3)', () => {
+  it('el catálogo de matrices tiene las mismas compuertas que el de rotaciones', () => {
+    expect(Object.keys(GATE_UNITARIES).sort()).toEqual(Object.keys(GATE_ROTATIONS).sort());
+  });
+
+  it('cada matriz es e^{iγ}·R_n̂(α) con el eje y el ángulo de su rotación', () => {
+    for (const [name, { matrix, globalPhase }] of Object.entries(GATE_UNITARIES)) {
+      const { axis, angle } = GATE_ROTATIONS[name];
+      expectMatrix(matrix, matScale(rotationMatrix(axis, angle), cexp(globalPhase)));
+    }
+  });
+
+  it('son unitarias: U·U† = I', () => {
+    for (const { matrix } of Object.values(GATE_UNITARIES)) {
+      expectMatrix(matMul(matrix, matAdjoint(matrix)), IDENTITY);
+    }
+  });
+
+  it('T·T = S, S·S = Z y H·H = I como matrices', () => {
+    const { X, Z, H, S, T } = GATE_UNITARIES;
+    expectMatrix(matMul(T.matrix, T.matrix), S.matrix);
+    expectMatrix(matMul(S.matrix, S.matrix), Z.matrix);
+    expectMatrix(matMul(H.matrix, H.matrix), IDENTITY);
+    expectMatrix(matMul(X.matrix, X.matrix), IDENTITY);
+  });
+
+  it('el camino de Hilbert (U|ψ⟩) coincide con la rotación de Rodrigues', () => {
+    for (const s of SAMPLE_STATES) {
+      for (const name of Object.keys(GATE_UNITARIES)) {
+        const viaHilbert = spinorToBlochVector(applyMatrix(GATE_UNITARIES[name].matrix, amplitudes(s)));
+        expectVector(viaHilbert, applyGateToVector(name, toBlochVector(s.theta, s.phi)));
+      }
+    }
+  });
+
+  it('R_n̂(2π) = −I y R_n̂(4π) = I: doble recubrimiento', () => {
+    const axis = { x: 0.6, y: 0, z: 0.8 };
+    expectMatrix(rotationMatrix(axis, 2 * P), matScale(IDENTITY, { re: -1, im: 0 }));
+    expectMatrix(rotationMatrix(axis, 4 * P), IDENTITY);
+  });
+
+  it('R_z(φ)·R_y(θ)|0⟩ es el estado (θ, φ) salvo la fase global e^{−iφ/2}', () => {
+    const state = { theta: 1.1, phi: 2.3 };
+    const U = matMul(rotationMatrix(Z_AXIS, state.phi), rotationMatrix(Y_AXIS, state.theta));
+    const s = applyMatrix(U, amplitudes(KET_0));
+    expectVector(spinorToBlochVector(s), toBlochVector(state.theta, state.phi));
+    const canonical = amplitudes(state);
+    expectComplex(cmul(s.alpha, cexp(state.phi / 2)), canonical.alpha);
+    expectComplex(cmul(s.beta, cexp(state.phi / 2)), canonical.beta);
+  });
+});
+
+describe('matriz de densidad', () => {
+  it('ρ = |ψ⟩⟨ψ| para estados puros', () => {
+    for (const s of SAMPLE_STATES) {
+      const { alpha, beta } = amplitudes(s);
+      const outer: Matrix2 = [
+        [cmul(alpha, cconj(alpha)), cmul(alpha, cconj(beta))],
+        [cmul(beta, cconj(alpha)), cmul(beta, cconj(beta))],
+      ];
+      expectMatrix(densityMatrix(toBlochVector(s.theta, s.phi)), outer);
+    }
+  });
+
+  it('es hermítica, de traza 1 y Tr(ρσᵢ) = rᵢ', () => {
+    const v = toBlochVector(1.1, 2.3);
+    const rho = densityMatrix(v);
+    expectMatrix(matAdjoint(rho), rho);
+    expectComplex(trace(rho), { re: 1, im: 0 });
+    expectComplex(trace(matMul(rho, PAULI.x)), { re: v.x, im: 0 });
+    expectComplex(trace(matMul(rho, PAULI.y)), { re: v.y, im: 0 });
+    expectComplex(trace(matMul(rho, PAULI.z)), { re: v.z, im: 0 });
+  });
+
+  it('la pureza es 1 en la superficie y ½ en el centro', () => {
+    expect(purity(toBlochVector(1.1, 2.3))).toBeCloseTo(1, 9);
+    expect(purity({ x: 0, y: 0, z: 0 })).toBeCloseTo(0.5, 9);
+    expect(purity({ x: 0.3, y: 0, z: 0.4 })).toBeCloseTo(0.625, 9);
+  });
+});
+
+describe('ángulo entre estados y solapamiento', () => {
+  it('|⟨ψ₁|ψ₂⟩|² = cos²(θ_B/2)', () => {
+    const a = toBlochVector(1.1, 2.3);
+    const b = toBlochVector(0.4, -1.9);
+    expect(fidelity(a, b)).toBeCloseTo(Math.cos(angleBetween(a, b) / 2) ** 2, 9);
+  });
+
+  it('ortogonal es antípoda (180°), no 90°', () => {
+    const zero = toBlochVector(0, 0);
+    const one = toBlochVector(P, 0);
+    const plus = toBlochVector(P / 2, 0);
+    expect(angleBetween(zero, one)).toBeCloseTo(P, 9);
+    expect(fidelity(zero, one)).toBeCloseTo(0, 9);
+    expect(angleBetween(zero, plus)).toBeCloseTo(P / 2, 9);
+    expect(fidelity(zero, plus)).toBeCloseTo(0.5, 9);
+    expect(angleBetween(plus, plus)).toBeCloseTo(0, 9);
+    expect(fidelity(plus, plus)).toBeCloseTo(1, 9);
+  });
+
+  it('coincide con las probabilidades de medición en cada eje', () => {
+    const v = toBlochVector(1.1, 2.3);
+    const p = measurementProbabilities(v);
+    expect(fidelity(v, Z_AXIS)).toBeCloseTo(p.z.plus, 9);
+    expect(fidelity(v, X_AXIS)).toBeCloseTo(p.x.plus, 9);
+    expect(fidelity(v, Y_AXIS)).toBeCloseTo(p.y.plus, 9);
+  });
+
+  it('angleBetween no da NaN ni pierde precisión para vectores casi iguales', () => {
+    const angle = angleBetween(Z_AXIS, normalize({ x: 1e-9, y: 0, z: 1 }));
+    expect(Number.isNaN(angle)).toBe(false);
+    expect(angle).toBeCloseTo(1e-9, 12);
+  });
+});
+
+describe('estado aleatorio uniforme (Haar)', () => {
+  const sequence = (...values: number[]) => {
+    let i = 0;
+    return () => values[i++ % values.length];
+  };
+
+  it('cos θ es uniforme: u = 0, ½, 1 dan θ = 0, 90°, 180°', () => {
+    expect(randomState(sequence(0, 0.5)).theta).toBeCloseTo(0, 9);
+    expect(randomState(sequence(0.5, 0.5)).theta).toBeCloseTo(P / 2, 9);
+    expect(randomState(sequence(1, 0.5)).theta).toBeCloseTo(P, 9);
+    for (const u of [0.1, 0.37, 0.8]) {
+      expect(Math.cos(randomState(sequence(u, 0.5)).theta)).toBeCloseTo(1 - 2 * u, 9);
+    }
+  });
+
+  it('φ queda en (−π, π]', () => {
+    expect(randomState(sequence(0.5, 0)).phi).toBeCloseTo(P, 9);
+    expect(randomState(sequence(0.5, 0.75)).phi).toBeCloseTo(-P / 2, 9);
+    expect(randomState(sequence(0.5, 0.999999)).phi).toBeGreaterThan(-P);
   });
 });

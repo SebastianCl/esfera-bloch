@@ -4,6 +4,21 @@
 // polo sur. Todo aquí está en esa convención; el mapeo a los ejes de Three.js
 // se hace únicamente en BlochSphere.tsx.
 
+import {
+  cabs2,
+  cconj,
+  cexp,
+  cmul,
+  complex,
+  IDENTITY,
+  matAdd,
+  matScale,
+  matVec,
+  PAULI,
+  type Complex,
+  type Matrix2,
+} from './complex';
+
 export interface BlochVector {
   x: number;
   y: number;
@@ -177,4 +192,120 @@ export const KET_STATES: Record<KetKey, SphericalAngles> = {
   minus: { theta: Math.PI / 2, phi: Math.PI },
   plusI: { theta: Math.PI / 2, phi: Math.PI / 2 },
   minusI: { theta: Math.PI / 2, phi: -Math.PI / 2 },
+};
+
+// ---------------------------------------------------------------------------
+// Espacio de Hilbert: amplitudes, matriz de densidad y compuertas como matrices
+// ---------------------------------------------------------------------------
+
+/** Amplitudes (α, β) de |ψ⟩ = α|0⟩ + β|1⟩. */
+export interface Spinor {
+  alpha: Complex;
+  beta: Complex;
+}
+
+/** En los polos (sin θ = 0) el azimut φ no está definido. */
+export const isPole = (theta: number): boolean => Math.abs(Math.sin(theta)) < 1e-9;
+
+/**
+ * Amplitudes con la convención de fase global de la esfera de Bloch:
+ * α = cos(θ/2) real y ≥ 0, β = e^{iφ} sin(θ/2). En los polos se toma φ = 0
+ * (si α = 0, β = 1): ahí φ sería una fase global, que no es observable.
+ */
+export const amplitudes = (state: SphericalAngles): Spinor => {
+  const phi = isPole(state.theta) ? 0 : state.phi;
+  const half = state.theta / 2;
+  const s = Math.sin(half);
+  const e = cexp(phi);
+  return {
+    alpha: complex(clean(Math.cos(half))),
+    beta: complex(clean(e.re * s), clean(e.im * s)),
+  };
+};
+
+/** Vector de Bloch de un espinor: r = (2 Re(α*β), 2 Im(α*β), |α|² − |β|²). El conjugado va en α. */
+export const spinorToBlochVector = (s: Spinor): BlochVector => {
+  const ab = cmul(cconj(s.alpha), s.beta);
+  return {
+    x: clean(2 * ab.re),
+    y: clean(2 * ab.im),
+    z: clean(cabs2(s.alpha) - cabs2(s.beta)),
+  };
+};
+
+/**
+ * Matriz de densidad ρ = ½(I + r·σ) = ½ [[1+z, x−iy], [x+iy, 1−z]].
+ * Para un estado puro (|r| = 1) es ρ = |ψ⟩⟨ψ|; con |r| < 1 describiría un estado mixto.
+ */
+export const densityMatrix = (v: BlochVector): Matrix2 => [
+  [complex((1 + v.z) / 2), complex(v.x / 2, -v.y / 2)],
+  [complex(v.x / 2, v.y / 2), complex((1 - v.z) / 2)],
+];
+
+/** Pureza Tr(ρ²) = (1 + |r|²)/2: 1 en la superficie (puro), ½ en el centro (máximamente mixto). */
+export const purity = (v: BlochVector): number => (1 + dot(v, v)) / 2;
+
+/**
+ * Solapamiento |⟨ψa|ψb⟩|² = (1 + a·b)/2 = cos²(θ_B/2), con θ_B el ángulo entre
+ * los vectores de Bloch. Ortogonal (0) es antípoda (180°); a 90° vale ½.
+ */
+export const fidelity = (a: BlochVector, b: BlochVector): number => Math.max(0, Math.min(1, (1 + dot(a, b)) / 2));
+
+/** Ángulo entre dos vectores de Bloch, en [0, π]. atan2 en vez de acos: preciso cerca de 0 y π. */
+export const angleBetween = (a: BlochVector, b: BlochVector): number => {
+  const c = cross(a, b);
+  return Math.atan2(Math.hypot(c.x, c.y, c.z), dot(a, b));
+};
+
+/**
+ * Matriz de la rotación R_n̂(α) = exp(−i α/2 n̂·σ) = cos(α/2) I − i sin(α/2) (n̂·σ).
+ * El ángulo de la esfera es α; en el espacio de Hilbert aparece α/2 porque SU(2)
+ * recubre dos veces a SO(3): R_n̂(2π) = −I y hacen falta 4π para volver a I.
+ */
+export const rotationMatrix = (axis: BlochVector, angle: number): Matrix2 => {
+  const n = normalize(axis);
+  const nSigma = matAdd(
+    matAdd(matScale(PAULI.x, complex(n.x)), matScale(PAULI.y, complex(n.y))),
+    matScale(PAULI.z, complex(n.z))
+  );
+  return matAdd(matScale(IDENTITY, complex(Math.cos(angle / 2))), matScale(nSigma, complex(0, -Math.sin(angle / 2))));
+};
+
+/** Aplica una matriz 2×2 a un espinor: |ψ'⟩ = U|ψ⟩. */
+export const applyMatrix = (U: Matrix2, s: Spinor): Spinor => {
+  const [alpha, beta] = matVec(U, [s.alpha, s.beta]);
+  return { alpha, beta };
+};
+
+export interface GateUnitary {
+  /** Matriz de la compuerta en la base {|0⟩, |1⟩}. */
+  matrix: Matrix2;
+  /** Fase global γ tal que U = e^{iγ} · R_n̂(α), con el eje y el ángulo de GATE_ROTATIONS. */
+  globalPhase: number;
+}
+
+/**
+ * Matrices de las compuertas del catálogo (mismas claves que GATE_ROTATIONS).
+ * Cada una es una rotación de la esfera salvo una fase global: X = i·R_x(π),
+ * H = i·R_n(π), S = e^{iπ/4}·R_z(π/2), T = e^{iπ/8}·R_z(π/4)…
+ */
+export const GATE_UNITARIES: Record<string, GateUnitary> = {
+  X: { matrix: [[complex(0), complex(1)], [complex(1), complex(0)]], globalPhase: Math.PI / 2 },
+  Y: { matrix: [[complex(0), complex(0, -1)], [complex(0, 1), complex(0)]], globalPhase: Math.PI / 2 },
+  Z: { matrix: [[complex(1), complex(0)], [complex(0), complex(-1)]], globalPhase: Math.PI / 2 },
+  H: { matrix: [[complex(SQRT1_2), complex(SQRT1_2)], [complex(SQRT1_2), complex(-SQRT1_2)]], globalPhase: Math.PI / 2 },
+  S: { matrix: [[complex(1), complex(0)], [complex(0), complex(0, 1)]], globalPhase: Math.PI / 4 },
+  T: { matrix: [[complex(1), complex(0)], [complex(0), cexp(Math.PI / 4)]], globalPhase: Math.PI / 8 },
+};
+
+/**
+ * Estado puro aleatorio uniforme sobre la esfera (medida de Haar): cos θ uniforme
+ * en [−1, 1] y φ uniforme en (−π, π]. Tomar θ uniforme en [0, π] acumularía estados
+ * en los polos. `rng` devuelve valores en [0, 1): la primera llamada fija θ y la
+ * segunda φ. Aquí acos es legítimo: es muestreo, no la conversión de un vector calculado.
+ */
+export const randomState = (rng: () => number = Math.random): SphericalAngles => {
+  const theta = Math.acos(1 - 2 * rng());
+  const phi = Math.PI * (1 - 2 * rng());
+  return { theta, phi };
 };

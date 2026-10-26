@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei';
 import { useTheme } from 'next-themes';
 import * as THREE from 'three';
-import { toBlochVector, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
+import { toBlochVector, toSpherical, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
 import { ket, KET_INFO, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 
@@ -255,10 +255,9 @@ function SphereVisualization({
     if (!onStateChange) return;
     event.stopPropagation();
 
-    const point = event.point.clone().normalize();
-    const v = fromThree(point);
-    const newTheta = Math.acos(Math.max(-1, Math.min(1, v.z)));
-    const newPhi = Math.atan2(v.y, v.x);
+    // event.point viene en coordenadas de mundo y la esfera no tiene transformación.
+    // toSpherical normaliza, usa atan2 (acos pierde precisión en los polos) y deja φ en (-π, π].
+    const { theta: newTheta, phi: newPhi } = toSpherical(fromThree(event.point));
     onStateChange(newTheta, newPhi);
   };
 

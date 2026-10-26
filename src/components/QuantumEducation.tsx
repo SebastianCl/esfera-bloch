@@ -2,7 +2,9 @@ import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
+import { MatrixView } from '@/components/MatrixView';
+import { GATE_ROTATIONS, GATE_UNITARIES, type BlochVector, type KetKey } from '@/lib/bloch';
+import { formatComplexExact, formatGlobalPhase } from '@/lib/format';
 import { ket, KET_INFO, KET_KEYS, KET_LABELS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 
@@ -13,6 +15,14 @@ interface QuantumEducationProps {
 }
 
 const degrees = (radians: number) => Math.round((radians * 180) / Math.PI);
+
+/** Subíndice del eje de rotación: x, y, z o n̂ para un eje genérico (el de H). */
+const axisSymbol = (axis: BlochVector): string => {
+  if (axis.x === 1) return 'x';
+  if (axis.y === 1) return 'y';
+  if (axis.z === 1) return 'z';
+  return 'n̂';
+};
 
 /** Expresión de cada autoestado en la base Z, con la notación elegida. */
 const expression = (key: KetKey, notation: Notation): string => {
@@ -63,6 +73,10 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
               La esfera de Bloch es esa herramienta: una flecha de longitud 1 cuya dirección codifica el estado completo
               de un qubit.
             </p>
+            <p>
+              Ojo: la flecha vive en un espacio abstracto de estados, no es la orientación de nada en el espacio físico.
+              Girarla 90° no gira la partícula 90°.
+            </p>
           </AccordionContent>
         </AccordionItem>
 
@@ -81,8 +95,14 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
               P({u}) = |a<sub>u</sub>|², P({d}) = |a<sub>d</sub>|², |a<sub>u</sub>|² + |a<sub>d</sub>|² = 1
             </div>
             <p>
-              Esa restricción es la que obliga a los estados a vivir sobre una circunferencia (amplitudes reales) o sobre
-              una esfera (amplitudes complejas), nunca en todo el plano.
+              Con amplitudes reales esa restricción deja una circunferencia. Con amplitudes complejas, cuatro números
+              reales con una ligadura, describe en realidad una 3-esfera. Pero |ψ⟩ y e<sup>iγ</sup>|ψ⟩ son el mismo
+              estado físico: la fase global γ no cambia ninguna probabilidad. Al descartarla quedan solo dos ángulos, y
+              eso es la esfera de Bloch.
+            </p>
+            <p>
+              No confundir con la fase relativa: {l} = ({u} − {d})/√2 no es {r}, porque el signo está entre las
+              amplitudes; en cambio −{r} sí es el mismo estado que {r}.
             </p>
           </AccordionContent>
         </AccordionItem>
@@ -100,6 +120,11 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
             </div>
             <p>
               Un solo ángulo α basta: |ψ⟩ = cos(α/2){u} + sin(α/2){d}. Es el fasor de la mecánica cuántica.
+            </p>
+            <p>
+              El par de amplitudes (cos α/2, sin α/2) gira a la mitad de velocidad: una vuelta entera del círculo de
+              Bloch (α = 360°) es media vuelta de las amplitudes, que vuelven con el signo cambiado, (−1, 0). Es el −1
+              global de la sección anterior: el mismo estado.
             </p>
             <Button size="sm" variant="outline" onClick={() => onSelectMode('circulo')}>
               Ver el círculo de Bloch
@@ -211,6 +236,16 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
               Las coordenadas cartesianas son x = sin θ cos φ, y = sin θ sin φ, z = cos θ. Fíjate en el θ/2: media vuelta
               de la flecha (θ = 180°) intercambia {u} por {d}, no vuelve al mismo estado.
             </p>
+            <p>
+              Y una vuelta entera (360°) alrededor de cualquier eje devuelve la flecha a su sitio pero multiplica |ψ⟩ por
+              −1; hacen falta 720° para recuperar el vector de estado exacto. Es la naturaleza espinorial del qubit: el
+              grupo de rotaciones de la esfera, SO(3), está recubierto dos veces por SU(2).
+            </p>
+            <p>
+              Los dos sliders son, salvo fase global, dos rotaciones desde {u}: R<sub>y</sub>(θ) baja la flecha y{' '}
+              R<sub>z</sub>(φ) la gira alrededor de Z. Es la descomposición de Euler R<sub>z</sub>·R<sub>y</sub>·R<sub>z</sub>,
+              cuya primera rotación no hace nada sobre {u}: con dos ángulos se llega a cualquier estado.
+            </p>
           </AccordionContent>
         </AccordionItem>
 
@@ -218,8 +253,15 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
           <AccordionTrigger className="text-sm">7. Compuertas como rotaciones</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
-              Toda compuerta de un qubit es una rotación de la esfera alrededor de algún eje. Al aplicarla, la esfera
-              muestra el eje y el arco recorrido.
+              Toda compuerta de un qubit es, salvo una fase global e<sup>iγ</sup>, una rotación de la esfera alrededor de
+              algún eje n̂. Al aplicarla, la esfera muestra el eje y el arco recorrido.
+            </p>
+            <div className="math-formula text-center text-xs">
+              U = e<sup>iγ</sup> R<sub>n̂</sub>(α), R<sub>n̂</sub>(α) = exp(−i α/2 n̂·σ) = cos(α/2) I − i sin(α/2) n̂·σ
+            </div>
+            <p>
+              El ángulo de la esfera es α; en la matriz aparece α/2. La esfera no ve e<sup>iγ</sup>, así que X, Y, Z y H
+              son rotaciones de 180° aunque sus matrices no sean exactamente R<sub>n̂</sub>(π).
             </p>
             <table className="w-full text-xs">
               <thead>
@@ -249,8 +291,29 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
               </tbody>
             </table>
             <p>
-              X, Y, Z y H son medias vueltas: aplicadas dos veces devuelven el estado original. S y T solo cambian la fase
-              φ, por eso en el círculo de Bloch no se pueden dibujar.
+              X, Y, Z y H son medias vueltas: aplicadas dos veces devuelven el estado original (como matrices, U² = I). S
+              y T solo cambian la fase φ, por eso en el círculo de Bloch no se pueden dibujar.
+            </p>
+            <p className="text-foreground font-medium">Matrices y fase global</p>
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+                {Object.keys(GATE_ROTATIONS).map((name) => {
+                  const g = GATE_ROTATIONS[name];
+                  const unitary = GATE_UNITARIES[name];
+                  return (
+                    <div key={name} className="rounded-md border border-border/40 bg-muted/40 p-2 space-y-1">
+                      <div className="font-mono text-xs text-foreground whitespace-nowrap">
+                        {name} = {formatGlobalPhase(unitary.globalPhase)}·R<sub>{axisSymbol(g.axis)}</sub>({degrees(g.angle)}°)
+                      </div>
+                      <MatrixView matrix={unitary.matrix} format={formatComplexExact} className="text-xs" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <p>
+              Para H el eje es n̂ = (X+Z)/√2. S y T son compuertas de fase P(φ) = diag(1, e<sup>iφ</sup>) = e<sup>iφ/2</sup>{' '}
+              R<sub>z</sub>(φ): Z = P(180°), S = P(90°), T = P(45°).
             </p>
           </AccordionContent>
         </AccordionItem>
@@ -266,6 +329,41 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
             <p>
               Por eso la fase importa: {r} y {i} tienen las mismas probabilidades en Z (50/50), pero en X son
               certeza y azar respectivamente. El panel de la izquierda muestra las tres bases a la vez.
+            </p>
+            <p>
+              Ángulo y probabilidad: para dos estados cualesquiera, |⟨ψ₁|ψ₂⟩|² = cos²(θ<sub>B</sub>/2), con{' '}
+              θ<sub>B</sub> el ángulo entre sus flechas. Los estados ortogonales ({u} y {d}, {r} y {l}) están en las
+              antípodas, a 180°, y no a 90°: a 90° el solapamiento es ½. El panel de la izquierda muestra ese ángulo con
+              cada autoestado.
+            </p>
+            <p>
+              Interferencia: parte de {r}, aplica Z (pasa a {l}, con las mismas probabilidades en Z) y luego H: llegas a{' '}
+              {d} con certeza. La fase relativa decidió el resultado al cambiar de base.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="density">
+          <AccordionTrigger className="text-sm">9. La matriz de densidad y el interior de la esfera</AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground space-y-2">
+            <p>
+              Otra forma de escribir el mismo estado es la matriz de densidad ρ = |ψ⟩⟨ψ|. Para un qubit siempre se
+              puede escribir con el vector de Bloch r = (x, y, z) y las matrices de Pauli:
+            </p>
+            <div className="math-formula text-center text-xs">
+              ρ = ½(I + x σ<sub>x</sub> + y σ<sub>y</sub> + z σ<sub>z</sub>) = ½ [[1+z, x−iy], [x+iy, 1−z]]
+            </div>
+            <p>
+              Las compuertas actúan como ρ′ = UρU<sup>†</sup>, y la fase global desaparece sola. La diagonal son las
+              probabilidades en Z; fuera de la diagonal están las coherencias, que dependen de la fase.
+            </p>
+            <p>
+              Lo nuevo es que ρ también describe estados que no son superposiciones puras sino mezclas estadísticas:
+              entonces |r| &lt; 1 y el punto queda dentro de la esfera. La pureza Tr(ρ²) = (1 + |r|²)/2 vale 1 en la
+              superficie (estado puro: dos grados de libertad, θ y φ) y ½ en el centro, ρ = I/2, donde no se sabe nada
+              del qubit (tres grados de libertad: también la longitud). La decoherencia y el entrelazamiento con otro
+              sistema acortan la flecha hacia el centro. Esta app solo muestra estados puros: el panel de la izquierda
+              enseña ρ y su pureza, siempre 1.
             </p>
           </AccordionContent>
         </AccordionItem>
