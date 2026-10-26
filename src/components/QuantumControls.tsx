@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { circleAngleFromState, GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
+import { GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
 import { ket, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 import { SECTION_LABEL } from '@/lib/styles';
@@ -12,11 +11,8 @@ interface QuantumControlsProps {
   onGateClick: (gate: string) => void;
   onPresetClick: (preset: KetKey | 'random') => void;
   onReset: () => void;
-  theta: number;
-  phi: number;
-  /** 'alpha' es el ángulo sobre el círculo de Bloch (modo círculo). */
-  onRotationChange: (angle: 'theta' | 'phi' | 'alpha', value: number) => void;
   notation: Notation;
+  /** Solo para avisar de los presets que sacan del círculo; los sliders viven en StateDisplay. */
   mode: ViewMode;
   /** Compuertas aplicadas desde el último estado fijado a mano, en orden. */
   history: string[];
@@ -25,7 +21,6 @@ interface QuantumControlsProps {
 }
 
 const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
-const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 const gates = [
   { name: 'X', description: 'Pauli-X (inversión de bit)', color: 'bg-red-500' },
@@ -40,9 +35,6 @@ export function QuantumControls({
   onGateClick,
   onPresetClick,
   onReset,
-  theta,
-  phi,
-  onRotationChange,
   notation,
   mode,
   history,
@@ -50,7 +42,6 @@ export function QuantumControls({
   onClearHistory,
 }: QuantumControlsProps) {
   const isCircle = mode === 'circulo';
-  const alpha = circleAngleFromState({ theta, phi });
 
   // Sin Card propia por sección: la tarjeta la pone Index.tsx y una tarjeta dentro
   // de otra solo resta ancho. Las secciones van separadas por Separator, como en StateDisplay.
@@ -120,81 +111,9 @@ export function QuantumControls({
             Vaciar
           </Button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Mover el estado a mano empieza un circuito nuevo.</p>
-      </section>
-
-      <Separator />
-
-      {/* Rotation Controls */}
-      <section>
-        <h4 className={`${SECTION_LABEL} mb-3`}>{isCircle ? 'Ángulo en el círculo' : 'Ángulos esféricos'}</h4>
-
-        {isCircle ? (
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">
-                  α (desde <span className="font-mono">{ket('zero', notation)}</span>)
-                </span>
-                <Badge variant="outline" className="text-xs font-mono tabular-nums">
-                  {toDegrees(alpha)}°
-                </Badge>
-              </div>
-              <Slider
-                value={[toDegrees(alpha)]}
-                onValueChange={(value) => onRotationChange('alpha', toRadians(value[0]))}
-                max={359}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-            <div className="math-formula text-center">
-              |ψ⟩ = cos(α/2){ket('zero', notation)} + sin(α/2){ket('one', notation)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              En el círculo las dos amplitudes son reales: un solo ángulo basta. α = 90° es {ket('plus', notation)} y α =
-              270° es {ket('minus', notation)}.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">θ (polar)</span>
-                <Badge variant="outline" className="text-xs font-mono tabular-nums">
-                  {((theta * 180) / Math.PI).toFixed(1)}°
-                </Badge>
-              </div>
-              {/* El slider trabaja en grados enteros para que los valores sean exactos (90°, 180°) */}
-              <Slider
-                value={[toDegrees(theta)]}
-                onValueChange={(value) => onRotationChange('theta', toRadians(value[0]))}
-                max={180}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">φ (azimut)</span>
-                <Badge variant="outline" className="text-xs font-mono tabular-nums">
-                  {((phi * 180) / Math.PI).toFixed(1)}°
-                </Badge>
-              </div>
-              <Slider
-                value={[toDegrees(phi)]}
-                onValueChange={(value) => onRotationChange('phi', toRadians(value[0]))}
-                max={180}
-                min={-180}
-                step={1}
-                className="w-full"
-              />
-            </div>
-          </div>
-        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          Mover el estado a mano (sliders, click en la esfera o preset) empieza un circuito nuevo.
+        </p>
       </section>
 
       <Separator />

@@ -228,7 +228,13 @@ const Index = () => {
             <div className="lg:col-span-2 lg:min-h-0 order-last lg:order-none">
               <Card className="h-full p-4">
                 <div className="lg:h-full lg:overflow-y-auto">
-                  <StateDisplay theta={theta} phi={phi} notation={notation} mode={mode} />
+                  <StateDisplay
+                    theta={theta}
+                    phi={phi}
+                    notation={notation}
+                    mode={mode}
+                    onRotationChange={handleRotationChange}
+                  />
                 </div>
               </Card>
             </div>
@@ -289,9 +295,6 @@ const Index = () => {
                           onGateClick={applyGate}
                           onPresetClick={applyPreset}
                           onReset={handleReset}
-                          theta={theta}
-                          phi={phi}
-                          onRotationChange={handleRotationChange}
                           notation={notation}
                           mode={mode}
                           history={history.map((h) => h.gate)}

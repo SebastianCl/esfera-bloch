@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
 import { MatrixView } from '@/components/MatrixView';
 import {
   amplitudes,
@@ -24,10 +25,14 @@ interface StateDisplayProps {
   phi: number;
   notation: Notation;
   mode: ViewMode;
+  /** Sliders de θ/φ (o de α en modo círculo): el estado se edita junto a sus coordenadas. */
+  onRotationChange: (angle: 'theta' | 'phi' | 'alpha', value: number) => void;
 }
 
 const degrees = (radians: number) => ((radians * 180) / Math.PI).toFixed(1);
 const percent = (p: number) => `${(p * 100).toFixed(1)}%`;
+const toDegrees = (radians: number) => Math.round((radians * 180) / Math.PI);
+const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
 /** Autoestado "+" de cada eje, en convención física. */
 const AXES: Record<'z' | 'x' | 'y', BlochVector> = {
@@ -36,18 +41,55 @@ const AXES: Record<'z' | 'x' | 'y', BlochVector> = {
   y: { x: 0, y: 1, z: 0 },
 };
 
-function ProbabilityBar({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
+/** Un ángulo editable: etiqueta, valor y slider en grados enteros (90°, 180° exactos). */
+function AngleSlider({
+  name,
+  label,
+  shown,
+  value,
+  min,
+  max,
+  title,
+  onChange,
+}: {
+  /** Nombre accesible del grupo (texto plano). */
+  name: string;
+  label: React.ReactNode;
+  /** Texto del Badge; difiere del valor cuando el ángulo no está definido (φ en los polos). */
+  shown: string;
+  value: number;
+  min: number;
+  max: number;
+  title?: string;
+  onChange: (degrees: number) => void;
+}) {
+  // El nombre accesible va en el grupo: el Slider de shadcn no pasa aria-label al pulgar
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm text-muted-foreground font-mono">{label}</span>
-      <div className="flex items-center gap-2">
-        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-          <div className={`h-full ${colorClass} transition-all duration-300`} style={{ width: `${value * 100}%` }} />
-        </div>
-        <Badge variant="outline" className="w-16 justify-center font-mono tabular-nums">
-          {percent(value)}
+    <div role="group" aria-label={name}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm">{label}</span>
+        <Badge variant="outline" className="text-xs font-mono tabular-nums" title={title}>
+          {shown}
         </Badge>
       </div>
+      <Slider value={[value]} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={1} className="w-full" />
+    </div>
+  );
+}
+
+/** Barra vertical de una probabilidad; el valor y el ket van en texto, el color solo identifica la base. */
+function ProbabilityColumn({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-[11px] font-mono tabular-nums">{percent(value)}</span>
+      <div
+        className="h-14 w-6 rounded-sm bg-muted overflow-hidden flex items-end"
+        role="img"
+        aria-label={`P(${label}) = ${percent(value)}`}
+      >
+        <div className={`w-full ${colorClass} rounded-t transition-all duration-300`} style={{ height: `${value * 100}%` }} />
+      </div>
+      <span className="text-[11px] font-mono text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -71,21 +113,26 @@ function BasisBlock({
   angle: number;
 }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-foreground">{title}</span>
-        <span className="text-xs text-muted-foreground">eje {axis}</span>
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex items-center gap-2">
+          <span className={`inline-block w-2 h-2 rounded-full ${colorClass}`} aria-hidden="true" />
+          <span className="text-xs font-medium text-foreground">{title}</span>
+          <span className="text-xs text-muted-foreground">eje {axis}</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Ángulo con {plusLabel}: {degrees(angle)}° → cos²({degrees(angle / 2)}°) = {percent(probabilities.plus)}
+        </p>
       </div>
-      <ProbabilityBar label={`P(${plusLabel})`} value={probabilities.plus} colorClass={colorClass} />
-      <ProbabilityBar label={`P(${minusLabel})`} value={probabilities.minus} colorClass={colorClass} />
-      <p className="text-[11px] text-muted-foreground">
-        Ángulo con {plusLabel}: {degrees(angle)}° → cos²({degrees(angle / 2)}°) = {percent(probabilities.plus)}
-      </p>
+      <div className="flex gap-2 shrink-0">
+        <ProbabilityColumn label={plusLabel} value={probabilities.plus} colorClass={colorClass} />
+        <ProbabilityColumn label={minusLabel} value={probabilities.minus} colorClass={colorClass} />
+      </div>
     </div>
   );
 }
 
-export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) {
+export function StateDisplay({ theta, phi, notation, mode, onRotationChange }: StateDisplayProps) {
   // Vector de Bloch en convención física (Z vertical)
   const v = toBlochVector(theta, phi);
   const { x, y, z } = v;
@@ -99,8 +146,8 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
   const probabilities = measurementProbabilities(v);
   const rho = densityMatrix(v);
 
-  // Modo círculo: la fórmula de los controles, cos(α/2)|0⟩ + sin(α/2)|1⟩, da las
-  // amplitudes con el signo opuesto cuando α > 180° (fase global −1: el mismo estado).
+  // Modo círculo: la fórmula cos(α/2)|0⟩ + sin(α/2)|1⟩ da las amplitudes con el
+  // signo opuesto cuando α > 180° (fase global −1: el mismo estado).
   const isCircle = mode === 'circulo';
   const circleAlpha = circleAngleFromState({ theta, phi });
   const circleFlipsSign = isCircle && circleAlpha > Math.PI + 1e-9;
@@ -116,7 +163,7 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
       {/* Notación de Dirac */}
       <div>
         <h4 className={`${SECTION_LABEL} mb-2`}>Notación de Dirac</h4>
-        <div className="math-formula text-center py-2">
+        <div className="math-formula text-center text-base lg:text-lg py-3">
           |ψ⟩ = {formatComplex(alpha)}
           {k0} + ({formatComplex(beta)}){k1}
         </div>
@@ -145,53 +192,76 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
 
       <Separator />
 
-      {/* Coordenadas */}
-      <h4 className={`${SECTION_LABEL} mb-2`}>Coordenadas</h4>
+      {/* Coordenadas: se leen y se editan en el mismo sitio */}
+      <div className="space-y-4">
+        <h4 className={SECTION_LABEL}>Coordenadas</h4>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h5 className="text-sm font-medium mb-2">Esféricas</h5>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">θ (theta):</span>
-              <Badge variant="outline" className="font-mono tabular-nums">
-                {degrees(theta)}°
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">φ (phi):</span>
-              <Badge
-                variant="outline"
-                className="font-mono tabular-nums"
-                title={atPole ? 'En los polos sin θ = 0: cualquier φ describe el mismo estado' : undefined}
-              >
-                {atPole ? 'indefinida' : `${degrees(phi)}°`}
-              </Badge>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <h5 className="text-sm font-medium">{isCircle ? 'Ángulo en el círculo' : 'Esféricas'}</h5>
+          {isCircle ? (
+            <>
+              <AngleSlider
+                name="α, ángulo en el círculo"
+                label={
+                  <>
+                    α (desde <span className="font-mono">{k0}</span>)
+                  </>
+                }
+                shown={`${toDegrees(circleAlpha)}°`}
+                value={toDegrees(circleAlpha)}
+                min={0}
+                max={359}
+                onChange={(deg) => onRotationChange('alpha', toRadians(deg))}
+              />
+              <div className="math-formula text-center">
+                |ψ⟩ = cos(α/2){k0} + sin(α/2){k1}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                En el círculo las dos amplitudes son reales: un solo ángulo basta. α = 90° es {ket('plus', notation)} y
+                α = 270° es {ket('minus', notation)}. Equivale a θ = {degrees(theta)}°, φ ={' '}
+                {atPole ? 'indefinida' : `${degrees(phi)}°`}.
+              </p>
+            </>
+          ) : (
+            <>
+              <AngleSlider
+                name="θ (polar)"
+                label="θ (polar)"
+                shown={`${degrees(theta)}°`}
+                value={toDegrees(theta)}
+                min={0}
+                max={180}
+                onChange={(deg) => onRotationChange('theta', toRadians(deg))}
+              />
+              <AngleSlider
+                name="φ (azimut)"
+                label="φ (azimut)"
+                shown={atPole ? 'indefinida' : `${degrees(phi)}°`}
+                title={atPole ? 'En los polos cualquier φ describe el mismo estado' : undefined}
+                value={toDegrees(phi)}
+                min={-180}
+                max={180}
+                onChange={(deg) => onRotationChange('phi', toRadians(deg))}
+              />
+            </>
+          )}
         </div>
 
-        <div>
-          <h5 className="text-sm font-medium mb-2">Cartesianas</h5>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">x:</span>
-              <Badge variant="outline" className="font-mono tabular-nums">
-                {x.toFixed(3)}
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">y:</span>
-              <Badge variant="outline" className="font-mono tabular-nums">
-                {y.toFixed(3)}
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">z:</span>
-              <Badge variant="outline" className="font-mono tabular-nums">
-                {z.toFixed(3)}
-              </Badge>
-            </div>
+        <div className="space-y-2">
+          <h5 className="text-sm font-medium">Cartesianas</h5>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {(
+              [
+                ['x', x],
+                ['y', y],
+                ['z', z],
+              ] as const
+            ).map(([axis, value]) => (
+              <div key={axis} className="rounded-md border bg-card/50 py-1.5">
+                <div className="text-[11px] text-muted-foreground">{axis}</div>
+                <div className="font-mono tabular-nums text-lg leading-tight">{value.toFixed(3)}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
