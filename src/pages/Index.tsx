@@ -221,13 +221,14 @@ const Index = () => {
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-6 min-h-full">
           {/* En escritorio las tres tarjetas ocupan la altura de la ventana y hacen scroll
-              por dentro; en móvil se apilan con su altura natural: esfera, controles y
-              al final el estado, para que las compuertas queden a mano. */}
+              por dentro (panel-scroll: barra fina y pr-3 para que no toque el contenido);
+              en móvil se apilan con su altura natural: esfera, controles y al final el
+              estado, para que las compuertas queden a mano. */}
           <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 lg:gap-6 lg:h-[calc(100vh-140px)]">
             {/* Estado Cuántico Actual - Izquierda (última en móvil) */}
             <div className="lg:col-span-2 lg:min-h-0 order-last lg:order-none">
               <Card className="h-full p-4">
-                <div className="lg:h-full lg:overflow-y-auto">
+                <div className="panel-scroll lg:h-full lg:overflow-y-auto lg:pr-3">
                   <StateDisplay
                     theta={theta}
                     phi={phi}
@@ -290,7 +291,7 @@ const Index = () => {
                     </TabsList>
 
                     <TabsContent value="controls" className="mt-4 lg:h-[calc(100%-2.5rem)]">
-                      <div className="lg:h-full lg:overflow-y-auto">
+                      <div className="panel-scroll lg:h-full lg:overflow-y-auto lg:pr-3">
                         <QuantumControls
                           onGateClick={applyGate}
                           onPresetClick={applyPreset}
@@ -306,7 +307,7 @@ const Index = () => {
                     </TabsContent>
 
                     <TabsContent value="theory" className="mt-4 lg:h-[calc(100%-2.5rem)]">
-                      <div className="lg:h-full lg:overflow-y-auto">
+                      <div className="panel-scroll lg:h-full lg:overflow-y-auto lg:pr-3">
                         <QuantumEducation notation={notation} onSelectMode={handleModeChange} onPreset={applyPreset} />
                       </div>
                     </TabsContent>

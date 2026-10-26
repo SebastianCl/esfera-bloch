@@ -153,6 +153,13 @@ All colors MUST be HSL.
     transform: translateX(100%);
   }
 
+  /* Paneles con scroll interno (lg): barra fina y discreta, separada del contenido
+     por el padding derecho que pone Index.tsx. */
+  .panel-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
   /* Quantum sphere container */
   .sphere-container {
     background: var(--gradient-glow);
