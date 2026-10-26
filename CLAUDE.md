@@ -9,7 +9,7 @@ Herramienta educativa en español para visualizar y manipular el estado de un qu
 ## Comandos
 
 ```bash
-pnpm dev          # servidor Vite en http://localhost:8080 (el README dice 5173; el puerto real está en vite.config.ts)
+pnpm dev          # servidor Vite en http://localhost:8080 (puerto fijado en vite.config.ts)
 pnpm build        # build de producción a dist/
 pnpm build:dev    # build en modo development
 pnpm lint         # eslint .
@@ -43,11 +43,15 @@ Rangos: θ ∈ [0, π], φ ∈ (-π, π], garantizados por `toSpherical` en `src
 
 ### Routing y proveedores
 
-`src/App.tsx` monta `QueryClientProvider` (TanStack Query, sin uso real todavía), `TooltipProvider`, dos toasters (`@/components/ui/toaster` y `sonner`; la app usa `sonner`) y `BrowserRouter` con una sola ruta `/` más catch-all 404. El header tiene un enlace a `../index.html`: la app se despliega como subpágina de un sitio mayor, no como raíz.
+`src/App.tsx` monta `ThemeProvider` de `next-themes`, `TooltipProvider`, el toaster de `sonner` (el único que usa la app; `@/components/ui/toaster` queda en `ui/` sin montar) y `BrowserRouter` con una sola ruta `/` más catch-all 404. El header tiene un enlace a `../index.html`: la app se despliega como subpágina de un sitio mayor, no como raíz.
 
-### Estilos
+### Estilos y tema
 
-Tema oscuro por defecto definido como variables HSL en `src/index.css` (`:root` es el tema oscuro, `.light` el claro). `tailwind.config.ts` expone colores `quantum-{blue,purple,cyan,magenta}`, `bg-gradient-quantum`, `shadow-glow` y animaciones `quantum-pulse`, `glow`. Clases utilitarias propias como `quantum-glow`, `math-formula` y `sphere-container` están en `index.css`.
+Tema oscuro por defecto definido como variables HSL en `src/index.css` (`:root` es el tema oscuro, `.light` el claro). `ThemeProvider` usa `attribute="class"` con `value={{ dark: 'theme-dark', light: 'light' }}`: la clase `light` activa el tema claro y el oscuro recibe una clase sin reglas a propósito, para no disparar las variantes `dark:` de los componentes de `ui/`. `ThemeToggle.tsx` alterna y `next-themes` lo persiste en localStorage. La escena 3D es transparente sobre `sphere-container`, así que `BlochSphere.tsx` lee `resolvedTheme` fuera del `Canvas` y pasa una paleta (`PALETTES`) a la escena. `tailwind.config.ts` expone colores `quantum-{blue,purple,cyan,magenta}`, `bg-gradient-quantum`, `shadow-glow` y animaciones `quantum-pulse`, `glow`. Clases utilitarias propias como `quantum-glow`, `math-formula` y `sphere-container` están en `index.css`.
+
+### Layout
+
+La rejilla de `Index.tsx` tiene altura fija de ventana solo en `lg` (`lg:h-[calc(100vh-140px)]`) y cada tarjeta hace scroll por dentro (`lg:min-h-0`, `lg:overflow-y-auto`). Por debajo de `lg` las tarjetas se apilan con altura natural, la esfera va primera (`order-first`) y ocupa `60vh`. Si tocas alturas, mantén esa separación: las utilidades de scroll interno llevan prefijo `lg:`.
 
 ### TypeScript
 

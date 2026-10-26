@@ -1,220 +1,104 @@
-# 🔮 State Navigator - Esfera de Bloch Interactiva
+# 🔮 Esfera de Bloch interactiva
 
-Una herramienta educativa interactiva para visualizar y manipular estados cuánticos en tiempo real utilizando la representación de la Esfera de Bloch.
+Herramienta educativa en español para visualizar y manipular el estado de un qubit sobre la esfera de Bloch. Nació de las lecciones 30 (*Píntame el estado*) y 31 (*La esfera de Bloch*) del curso Mundo Cuántico, y sigue su hilo: del fasor al círculo de Bloch, del círculo al plano complejo de Gauss y de ahí a la esfera completa.
 
-![State Navigator](https://img.shields.io/badge/Estado-En%20Desarrollo-yellow)
-![React](https://img.shields.io/badge/React-18.3.1-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
-![Three.js](https://img.shields.io/badge/Three.js-0.160.1-green)
-![Vite](https://img.shields.io/badge/Vite-5.4.19-orange)
+![React](https://img.shields.io/badge/React-18-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Three.js](https://img.shields.io/badge/Three.js-0.160-green)
+![Vite](https://img.shields.io/badge/Vite-7-orange)
+![Vitest](https://img.shields.io/badge/Tests-Vitest-6E9F18)
 
-## 🌟 Características
+## 🌟 Qué hace
 
-### 🎯 Visualización 3D Interactiva
-- **Esfera de Bloch en 3D**: Visualización completa con ejes coordenados y etiquetas
-- **Interacción directa**: Haz clic en la esfera para establecer estados cuánticos
-- **Animaciones fluidas**: Transiciones suaves entre estados
-- **Controles de cámara**: Zoom, rotación y paneo para explorar desde cualquier ángulo
+### Esfera 3D
+- **Vector de estado** sobre una esfera con ejes X, Y, Z y los seis autoestados etiquetados: |0⟩ y |1⟩ en los polos; |+⟩, |−⟩, |+i⟩ y |−i⟩ en el ecuador.
+- **Compuertas como rotaciones**: al aplicar X, Y, Z, H, S o T el vector recorre el arco real de la rotación y se muestra el eje con su etiqueta.
+- **Click sobre la esfera** para fijar un estado; **sliders** de θ y φ en grados enteros; cámara libre con arrastre y rueda.
 
-### 🎛️ Compuertas Cuánticas
-- **Compuertas Pauli**: X, Y, Z para rotaciones fundamentales
-- **Compuerta Hadamard**: Creación de superposiciones
-- **Compuertas de fase**: S y T para manipulación de fase
-- **Aplicación en tiempo real**: Observa inmediatamente el efecto de cada compuerta
+### Tres modos de vista
+- **Esfera 3D**: cámara libre.
+- **Desde el polo**: la cámara se coloca sobre |0⟩ y el ecuador se ve como el plano complejo, con |+⟩ en +1, |−⟩ en −1, |+i⟩ en +i y |−i⟩ en −i (lección 31).
+- **Círculo 2D**: el estado se restringe al plano XZ, el de las amplitudes reales, con un único ángulo α (lección 30). Si una compuerta o un preset introduce una fase imaginaria, la app avisa y abre la esfera completa.
 
-### 📊 Estados Predefinidos
-- **Estados básicos**: |0⟩, |1⟩ (base computacional)
-- **Estados de superposición**: |+⟩, |-⟩ (base X)
-- **Estados de fase**: |+i⟩, |-i⟩ (base Y)
-- **Estados aleatorios**: Generación automática para exploración
+### Panel de estado
+- Notación de Dirac en forma cartesiana y polar, comprobación de norma 1.
+- Coordenadas esféricas y cartesianas.
+- Probabilidades de medición en las **tres bases** (Z, X e Y) y fase relativa.
 
-### 🎚️ Controles Precisos
-- **Rotaciones parametrizadas**: Sliders para RX(θ) y RY(φ)
-- **Valores en tiempo real**: Visualización de ángulos en grados
-- **Control manual**: Ajuste fino de los parámetros del estado
+### Controles
+- Compuertas X, Y, Z, H, S y T con su eje y ángulo.
+- **Circuito aplicado**: secuencia de compuertas con deshacer paso a paso (rotación inversa animada) y vaciar.
+- Seis estados predefinidos, reinicio y estado aleatorio.
+- **Selector de notación**: computación cuántica (|0⟩, |1⟩, |+⟩, …) o la del curso (|u⟩, |d⟩, |r⟩, |l⟩, |i⟩, |o⟩).
+- Tema oscuro o claro.
 
-### 📚 Contenido Educativo
-- **Teoría integrada**: Explicaciones de conceptos cuánticos
-- **Información del estado**: Representación matemática en tiempo real
-- **Notificaciones informativas**: Feedback sobre cada operación
+### Teoría
+Pestaña con ocho secciones que siguen las dos lecciones, con botones que llevan la esfera al modo o estado del que se habla. Los informes de clase están en `docs/`.
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio rápido
 
-### Prerrequisitos
-- Node.js 18+ o Bun
-- npm, pnpm, o bun
-
-### Instalación
+Requiere Node.js 18+ y pnpm.
 
 ```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/state-navigator.git
-cd state-navigator
-
-# Instalar dependencias (elige tu gestor preferido)
-npm install
-# o
 pnpm install
-# o
-bun install
-```
-
-### Desarrollo
-
-```bash
-# Iniciar servidor de desarrollo
-npm run dev
-# o
 pnpm dev
-# o
-bun dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
-
-### Construcción
+La aplicación queda en `http://localhost:8080` (puerto fijado en `vite.config.ts`).
 
 ```bash
-# Construir para producción
-npm run build
-# o
-pnpm build
-# o
-bun run build
+pnpm test      # tests de la matemática del qubit (Vitest)
+pnpm lint      # eslint
+pnpm build     # build de producción en dist/
+pnpm preview   # sirve dist/
 ```
+
+Para comprobar tipos: `npx tsc -p tsconfig.app.json --noEmit`.
 
 ## 🛠️ Tecnologías
 
-### Frontend
-- **React 18.3.1** - Biblioteca de interfaz de usuario
-- **TypeScript** - Tipado estático para JavaScript
-- **Vite** - Herramientas de construcción rápida
-- **Tailwind CSS** - Framework de CSS utilitario
+- **React 18 + TypeScript + Vite**
+- **Three.js** vía **@react-three/fiber** y **@react-three/drei** para el 3D
+- **shadcn/ui**, **Radix UI** y **Tailwind CSS** para la interfaz
+- **Sonner** para las notificaciones, **next-themes** para el tema
+- **Vitest** para los tests
 
-### Visualización 3D
-- **Three.js** - Biblioteca de gráficos 3D
-- **@react-three/fiber** - Renderer React para Three.js
-- **@react-three/drei** - Helpers y abstracciones útiles
-
-### UI/UX
-- **shadcn/ui** - Componentes de interfaz modernos
-- **Radix UI** - Primitivos de UI accesibles
-- **Lucide React** - Iconos consistentes
-- **Sonner** - Notificaciones toast elegantes
-
-### Estado y Navegación
-- **React Router DOM** - Enrutamiento del lado del cliente
-- **TanStack Query** - Gestión de estado del servidor
-- **React Hook Form** - Gestión de formularios
-
-## 📁 Estructura del Proyecto
+## 📁 Estructura
 
 ```
 src/
+├── lib/
+│   ├── bloch.ts             # Matemática del qubit: vector de Bloch, Rodrigues,
+│   │                        # compuertas como eje + ángulo, bases, círculo de Bloch
+│   ├── bloch.test.ts        # Tests de lo anterior
+│   ├── notation.ts          # Las dos notaciones de los autoestados
+│   └── modes.ts             # Modos de vista (libre, polo, círculo)
 ├── components/
-│   ├── BlochSphere.tsx      # Componente principal de visualización 3D
-│   ├── QuantumControls.tsx  # Panel de control de compuertas y estados
-│   ├── StateDisplay.tsx     # Información del estado cuántico
-│   ├── QuantumEducation.tsx # Contenido educativo y teoría
-│   └── ui/                  # Componentes de interfaz reutilizables
+│   ├── BlochSphere.tsx      # Escena 3D: esfera, etiquetas, animación, cámaras
+│   ├── QuantumControls.tsx  # Compuertas, circuito, sliders y presets
+│   ├── StateDisplay.tsx     # Estado actual, coordenadas y probabilidades
+│   ├── QuantumEducation.tsx # Teoría siguiendo las lecciones
+│   ├── ThemeToggle.tsx      # Interruptor de tema
+│   └── ui/                  # shadcn/ui generado
 ├── pages/
-│   ├── Index.tsx           # Página principal de la aplicación
-│   └── NotFound.tsx        # Página de error 404
-├── hooks/                  # Hooks personalizados
-├── lib/                    # Utilidades y configuraciones
-└── styles/                 # Estilos globales
+│   ├── Index.tsx            # Página principal y dueña del estado
+│   └── NotFound.tsx
+└── index.css                # Tema (variables HSL) y utilidades propias
+docs/                        # Informes de las lecciones 30 y 31
 ```
 
-## 🎮 Uso
+## 📐 Convenciones
 
-### Navegación Básica
-1. **Visualizar**: La esfera se muestra automáticamente al cargar
-2. **Rotar vista**: Arrastra para rotar la cámara alrededor de la esfera
-3. **Zoom**: Usa la rueda del ratón para acercar/alejar
-4. **Interactuar**: Haz clic en cualquier punto de la esfera para establecer ese estado
-
-### Aplicar Compuertas
-1. Ve al panel de **Controles**
-2. Haz clic en cualquier compuerta (X, Y, Z, H, S, T)
-3. Observa la transformación en tiempo real
-4. Las notificaciones mostrarán el nuevo estado
-
-### Estados Predefinidos
-1. Selecciona un estado del panel de **Estados Predefinidos**
-2. El vector se moverá inmediatamente a la posición correspondiente
-3. Úsalos como punto de partida para experimentar
-
-### Control Manual
-1. Utiliza los sliders para **RX(θ)** y **RY(φ)**
-2. Observa cómo cambia el vector en tiempo real
-3. Los valores se muestran en grados para fácil comprensión
-
-## 📖 Conceptos Cuánticos
-
-### Esfera de Bloch
-La Esfera de Bloch es una representación geométrica de los estados puros de un sistema cuántico de dos niveles (qubit). Cada punto en la superficie de la esfera corresponde a un estado cuántico único.
-
-### Coordenadas
-- **θ (theta)**: Ángulo polar (0 a π)
-- **φ (phi)**: Ángulo azimutal (-π a π)
-- **Polos**: |0⟩ (norte) y |1⟩ (sur)
-- **Ecuador**: Estados de superposición
-
-### Compuertas Cuánticas
-- **X**: Rotación π alrededor del eje X (bit flip)
-- **Y**: Rotación π alrededor del eje Y
-- **Z**: Rotación π alrededor del eje Z (phase flip)
-- **H**: Hadamard, crea superposiciones
-- **S**: Phase gate (π/2)
-- **T**: π/8 gate (π/4)
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas! Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
-
-### Áreas de Contribución
-- 🐛 Corrección de bugs
-- ✨ Nuevas compuertas cuánticas
-- 📚 Contenido educativo adicional
-- 🎨 Mejoras de UI/UX
-- 📱 Responsividad móvil
-- 🌐 Internacionalización
-- ⚡ Optimizaciones de rendimiento
+- Convención de física: Z vertical, |0⟩ en el polo norte. θ ∈ [0, π], φ ∈ (−π, π].
+- |ψ⟩ = cos(θ/2)|0⟩ + e^{iφ} sin(θ/2)|1⟩; x = sin θ cos φ, y = sin θ sin φ, z = cos θ.
+- Cada compuerta es una rotación de la esfera: X, Y, Z y H giran π alrededor de X, Y, Z y (X+Z)/√2; S y T giran π/2 y π/4 alrededor de Z.
+- Three.js tiene Y vertical; el mapeo física → Three.js es la permutación cíclica (x, y, z) → (y, z, x), que conserva la orientación de la terna.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+MIT.
 
 ## 📧 Contacto
 
 - **Autor**: SebastianCl
 - **Repositorio**: [GitHub](https://github.com/SebastianCl/state-navigator)
-- **Issues**: [Reportar problemas](https://github.com/SebastianCl/state-navigator/issues)
-
----
-
-*Hecho con ❤️ para la educación en computación cuántica*
-
-## 🎯 Ejemplos de Uso Educativo
-
-### Para Estudiantes
-1. **Exploración libre**: Experimenta haciendo clic en diferentes puntos
-2. **Seguimiento de compuertas**: Aplica compuertas secuencialmente y observa el efecto
-3. **Comparación de estados**: Alterna entre estados predefinidos para entender diferencias
-
-### Para Educadores
-1. **Demostraciones en clase**: Proyecta la aplicación para explicar conceptos
-2. **Tareas interactivas**: Asigna ejercicios específicos con la herramienta
-3. **Evaluación visual**: Verifica comprensión a través de manipulación de estados
-
-### Ejercicios Sugeridos
-1. **Ejercicio 1**: Partir de |0⟩ y llegar a |1⟩ usando solo compuertas X
-2. **Ejercicio 2**: Crear |+⟩ desde |0⟩ usando Hadamard
-3. **Ejercicio 3**: Explorar el efecto de aplicar H dos veces consecutivas
-4. **Ejercicio 4**: Crear todos los estados del ecuador usando diferentes compuertas

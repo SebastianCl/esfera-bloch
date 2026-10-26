@@ -1,6 +1,7 @@
 import { useRef, useMemo, useEffect, type ComponentRef, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei';
+import { useTheme } from 'next-themes';
 import * as THREE from 'three';
 import { toBlochVector, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
 import { ket, KET_INFO, type Notation } from '@/lib/notation';
@@ -52,6 +53,18 @@ const CAMERA_POSITIONS: Record<ViewMode, [number, number, number]> = {
 };
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/** Colores de la escena que dependen del tema de la página (el canvas es transparente). */
+interface Palette {
+  state: string;
+  wire: string;
+  wireOpacity: number;
+}
+
+const PALETTES: Record<'dark' | 'light', Palette> = {
+  dark: { state: '#C084FC', wire: '#8B5CF6', wireOpacity: 0.3 },
+  light: { state: '#6D28D9', wire: '#6D28D9', wireOpacity: 0.35 },
+};
 
 interface RotationAnimation {
   rotation: AppliedRotation;
@@ -141,8 +154,8 @@ function SphereVisualization({
   lastRotation,
   notation,
   mode,
-}: Omit<BlochSphereProps, 'className' | 'onUserOrbit'>) {
-  const sphereRef = useRef<THREE.Mesh>(null);
+  palette,
+}: Omit<BlochSphereProps, 'className' | 'onUserOrbit'> & { palette: Palette }) {
   const arrowRef = useRef<THREE.Group>(null);
   const axisGroupRef = useRef<THREE.Group>(null);
   const axisLineRef = useRef<ComponentRef<typeof Line>>(null);
@@ -185,11 +198,6 @@ function SphereVisualization({
   }, [lastRotation?.id]);
 
   useFrame((state, delta) => {
-    // Giro suave y decorativo de la malla
-    if (sphereRef.current) {
-      sphereRef.current.rotation.y = state.clock.elapsedTime * 0.1;
-    }
-
     const anim = animation.current;
     if (anim) {
       if (anim.startTime === null) anim.startTime = state.clock.elapsedTime;
@@ -267,17 +275,22 @@ function SphereVisualization({
   // en el plano complejo (+1, −1, +i, −i), como en la lección 31.
   const equatorLabel = (key: KetKey) => (isPole ? `${ket(key, notation)}\n${KET_INFO[key].complex}` : ket(key, notation));
 
-  const STATE_COLOR = '#C084FC';
+  const STATE_COLOR = palette.state;
 
   return (
     <>
       <ambientLight intensity={0.6} />
       <pointLight position={[10, 10, 10]} intensity={1} />
 
-      {/* Malla de la esfera (atenuada en modo círculo) */}
-      <mesh ref={sphereRef} position={[0, 0, 0]} onClick={handleSphereClick}>
+      {/* Malla de la esfera, fija respecto a los ejes (atenuada en modo círculo) */}
+      <mesh position={[0, 0, 0]} onClick={handleSphereClick}>
         <sphereGeometry args={[1, 32, 16]} />
-        <meshBasicMaterial color="#8B5CF6" wireframe transparent opacity={isCircle ? 0.1 : 0.3} />
+        <meshBasicMaterial
+          color={palette.wire}
+          wireframe
+          transparent
+          opacity={isCircle ? palette.wireOpacity / 3 : palette.wireOpacity}
+        />
       </mesh>
 
       {/* Esfera invisible para capturar clicks de forma estable */}
@@ -412,6 +425,10 @@ export function BlochSphere({
   mode,
   onUserOrbit,
 }: BlochSphereProps) {
+  // El tema se lee aquí, fuera del Canvas, y se pasa como prop a la escena
+  const { resolvedTheme } = useTheme();
+  const palette = resolvedTheme === 'light' ? PALETTES.light : PALETTES.dark;
+
   return (
     <div className={`sphere-container rounded-xl ${className}`}>
       <Canvas camera={{ position: CAMERA_POSITIONS.libre, fov: 50 }} style={{ height: '100%', width: '100%' }}>
@@ -422,6 +439,7 @@ export function BlochSphere({
           lastRotation={lastRotation}
           notation={notation}
           mode={mode}
+          palette={palette}
         />
         <CameraRig mode={mode} onUserOrbit={onUserOrbit} />
       </Canvas>

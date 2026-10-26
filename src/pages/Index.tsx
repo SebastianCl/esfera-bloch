@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import {
   applyGate as applyGateToState,
@@ -212,6 +213,7 @@ const Index = () => {
               <Button variant="outline" size="sm" onClick={() => applyPreset('random')}>
                 Aleatorio
               </Button>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -220,18 +222,20 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-6 min-h-full">
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 min-h-[calc(100vh-140px)]">
+          {/* En escritorio las tres tarjetas ocupan la altura de la ventana y hacen scroll
+              por dentro; en móvil se apilan con su altura natural y la esfera va primero. */}
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 lg:h-[calc(100vh-140px)]">
             {/* Estado Cuántico Actual - Izquierda */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 lg:min-h-0">
               <Card className="h-full p-4">
-                <div className="h-full overflow-y-auto">
+                <div className="lg:h-full lg:overflow-y-auto">
                   <StateDisplay theta={theta} phi={phi} notation={notation} />
                 </div>
               </Card>
             </div>
 
-            {/* Esfera de Bloch - Centro */}
-            <div className="lg:col-span-3">
+            {/* Esfera de Bloch - Centro (primera en móvil) */}
+            <div className="lg:col-span-3 lg:min-h-0 order-first lg:order-none">
               <Card className="h-full p-4 flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <ToggleGroup
@@ -252,7 +256,7 @@ const Index = () => {
                     {VIEW_MODES.find((m) => m.value === mode)?.description}
                   </span>
                 </div>
-                <div className="flex-1 min-h-[420px]">
+                <div className="h-[60vh] lg:h-auto lg:flex-1 lg:min-h-0">
                   <BlochSphere
                     theta={theta}
                     phi={phi}
@@ -268,17 +272,17 @@ const Index = () => {
             </div>
 
             {/* Controles y Teoría - Derecha */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 lg:min-h-0">
               <Card className="h-full p-4">
-                <div className="h-full overflow-y-hidden">
-                  <Tabs defaultValue="controls" className="w-full h-full">
+                <div className="lg:h-full lg:overflow-y-hidden">
+                  <Tabs defaultValue="controls" className="w-full lg:h-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="controls">Controles</TabsTrigger>
                       <TabsTrigger value="theory">Teoría</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="controls" className="mt-4 h-[calc(100%-2.5rem)]">
-                      <div className="h-full overflow-y-auto">
+                    <TabsContent value="controls" className="mt-4 lg:h-[calc(100%-2.5rem)]">
+                      <div className="lg:h-full lg:overflow-y-auto">
                         <QuantumControls
                           onGateClick={applyGate}
                           onPresetClick={applyPreset}
@@ -295,8 +299,8 @@ const Index = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="theory" className="mt-4 h-[calc(100%-2.5rem)]">
-                      <div className="h-full overflow-y-auto">
+                    <TabsContent value="theory" className="mt-4 lg:h-[calc(100%-2.5rem)]">
+                      <div className="lg:h-full lg:overflow-y-auto">
                         <QuantumEducation notation={notation} onSelectMode={handleModeChange} onPreset={applyPreset} />
                       </div>
                     </TabsContent>
