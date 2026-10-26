@@ -6,7 +6,7 @@ import { Trash2, Undo2 } from 'lucide-react';
 import { GateIcon } from '@/components/GateIcon';
 import { GATE_ROTATIONS, ketKeyOf, type KetKey, type SphericalAngles } from '@/lib/bloch';
 import { axisColor } from '@/lib/colors';
-import { ket, KET_KEYS, type Notation } from '@/lib/notation';
+import { ket, KET_INFO, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 import { SECTION_LABEL } from '@/lib/styles';
 
@@ -127,28 +127,29 @@ export function QuantumControls({
         {history.length === 0 || !initialState ? (
           <p className="text-xs text-muted-foreground">Aplica una compuerta para empezar el circuito.</p>
         ) : (
-          /* Hilo de circuito: estado inicial, compuertas en orden y estado final */
-          <div className="overflow-x-auto">
-            <div className="flex items-center min-w-max py-1 font-mono text-sm">
-              <span className="shrink-0 pr-1">{describeInitial(initialState, notation)}</span>
-              {history.map((gate, index) => {
-                const rotation = GATE_ROTATIONS[gate];
-                return (
-                  <span key={`${gate}-${index}`} className="flex items-center">
-                    <span className="h-px w-4 bg-border" aria-hidden="true" />
-                    {/* La letra va en el color del texto: el borde en el color del eje solo identifica */}
-                    <span
-                      className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border-2 bg-card px-1.5 font-bold"
-                      style={rotation ? { borderColor: axisColor(rotation.axis, theme) } : undefined}
-                    >
-                      {gate}
-                    </span>
+          /* Hilo de circuito: estado inicial, compuertas en orden y estado final.
+             Salta de línea en vez de hacer scroll: un circuito largo se ve entero. */
+          <div className="flex flex-wrap items-center gap-y-2 py-1 font-mono text-sm">
+            <span className="pr-1">{describeInitial(initialState, notation)}</span>
+            {history.map((gate, index) => {
+              const rotation = GATE_ROTATIONS[gate];
+              return (
+                <span key={`${gate}-${index}`} className="flex items-center">
+                  <span className="h-px w-3 bg-border" aria-hidden="true" />
+                  {/* La letra va en el color del texto: el borde en el color del eje solo identifica */}
+                  <span
+                    className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border-2 bg-card px-1.5 font-bold"
+                    style={rotation ? { borderColor: axisColor(rotation.axis, theme) } : undefined}
+                  >
+                    {gate}
                   </span>
-                );
-              })}
-              <span className="h-px w-4 bg-border" aria-hidden="true" />
-              <span className="shrink-0 pl-1 text-muted-foreground">|ψ⟩</span>
-            </div>
+                </span>
+              );
+            })}
+            <span className="flex items-center">
+              <span className="h-px w-3 bg-border" aria-hidden="true" />
+              <span className="pl-1 text-muted-foreground">|ψ⟩</span>
+            </span>
           </div>
         )}
         <div className="flex gap-2 mt-3">
@@ -182,6 +183,7 @@ export function QuantumControls({
                 className={`quantum-glow ${leavesCircle ? 'border-dashed opacity-70' : ''}`}
                 onClick={() => onPresetClick(key)}
                 title={leavesCircle ? 'Este estado tiene fase imaginaria: no cabe en el círculo' : undefined}
+                aria-label={`${ket(key, notation)}: ${KET_INFO[key].description}, ${KET_INFO[key].axis}`}
               >
                 <span className="font-mono">{ket(key, notation)}</span>
               </Button>
