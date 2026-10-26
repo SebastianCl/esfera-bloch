@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { circleAngleFromState, GATE_ROTATIONS, type KetKey } from '@/lib/bloch';
 import { ket, KET_KEYS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
@@ -61,23 +62,34 @@ export function QuantumControls({
           {gates.map((gate) => {
             const rotation = GATE_ROTATIONS[gate.name];
             return (
-              <Button
-                key={gate.name}
-                variant="outline"
-                className="quantum-glow transition-all duration-300 hover:scale-105"
-                onClick={() => onGateClick(gate.name)}
-                title={`${gate.description}: rotación de ${toDegrees(rotation.angle)}° alrededor del ${rotation.axisLabel}`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${gate.color}`} />
-                  <span className="font-mono font-bold">{gate.name}</span>
-                </div>
-              </Button>
+              <Tooltip key={gate.name}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="quantum-glow transition-all duration-300 hover:scale-105"
+                    onClick={() => onGateClick(gate.name)}
+                    aria-label={`${gate.name}: ${gate.description}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${gate.color}`} />
+                      <span className="font-mono font-bold">{gate.name}</span>
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-56">
+                  <p className="font-medium">{gate.description}</p>
+                  <p className="text-muted-foreground">
+                    Rotación de <span className="font-mono tabular-nums">{toDegrees(rotation.angle)}°</span> alrededor
+                    del {rotation.axisLabel}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
         <div className="mt-3 text-xs text-muted-foreground">
-          Cada compuerta es una rotación de la esfera. Pasa el cursor por un botón para ver su eje y ángulo.
+          Cada compuerta es una rotación de la esfera: su eje y ángulo aparecen al pasar el cursor y en el aviso al
+          aplicarla.
         </div>
       </Card>
 
@@ -85,9 +97,7 @@ export function QuantumControls({
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-3 text-primary">Circuito aplicado</h3>
         {history.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Todavía no hay compuertas. Las que apliques aparecerán aquí en orden y podrás deshacerlas una a una.
-          </p>
+          <p className="text-xs text-muted-foreground">Aplica una compuerta para empezar el circuito.</p>
         ) : (
           <div className="flex flex-wrap items-center gap-1 font-mono text-sm">
             {history.map((gate, index) => (
@@ -106,9 +116,7 @@ export function QuantumControls({
             Vaciar
           </Button>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          Fijar el estado a mano (sliders, click o preset) empieza un circuito nuevo.
-        </div>
+        <div className="mt-2 text-xs text-muted-foreground">Mover el estado a mano empieza un circuito nuevo.</div>
       </Card>
 
       {/* Rotation Controls */}

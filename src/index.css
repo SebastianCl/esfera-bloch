@@ -84,14 +84,17 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 263 85% 70%;
+    /* Más oscuro que en el tema oscuro: el violeta 70% da 3.4:1 sobre blanco y los
+       títulos text-primary (18px) necesitan 4.5:1. Con 52% quedan en ~6.5:1. */
+    --primary: 263 70% 52%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47% 11%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* 42% y no 47%: el texto atenuado sobre --secondary (pestañas inactivas) daba 4.3:1 */
+    --muted-foreground: 215 19% 42%;
 
     --accent: 262 83% 58%;
     --accent-foreground: 210 40% 98%;
@@ -101,7 +104,7 @@ All colors MUST be HSL.
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 263 85% 70%;
+    --ring: 263 70% 52%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
