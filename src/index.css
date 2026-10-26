@@ -156,4 +156,13 @@ All colors MUST be HSL.
     backdrop-filter: blur(10px);
     border: 1px solid hsl(var(--border));
   }
+
+  /* OrbitControls pone touch-action: none en el canvas y se traga el scroll de la
+     página. Por debajo de lg la esfera ocupa 60vh, así que el gesto vertical debe
+     seguir siendo scroll: solo el deslizamiento horizontal gira la cámara. */
+  @media (max-width: 1023px) {
+    .sphere-container canvas {
+      touch-action: pan-y !important;
+    }
+  }
 }

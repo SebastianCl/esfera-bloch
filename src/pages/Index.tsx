@@ -26,6 +26,7 @@ import {
 } from '@/lib/bloch';
 import { ket, NOTATION_NAMES, NOTATIONS, type Notation } from '@/lib/notation';
 import { VIEW_MODES, type ViewMode } from '@/lib/modes';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 
 /** Una compuerta aplicada y el estado que había antes, para poder deshacerla. */
 export interface GateHistoryEntry {
@@ -47,6 +48,7 @@ const Index = () => {
   const [mode, setMode] = useState<ViewMode>('libre');
   // Secuencia de compuertas desde el último estado fijado a mano
   const [history, setHistory] = useState<GateHistoryEntry[]>([]);
+  const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
 
   const setState = (next: SphericalAngles) => {
     setTheta(next.theta);
@@ -219,10 +221,11 @@ const Index = () => {
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-6 min-h-full">
           {/* En escritorio las tres tarjetas ocupan la altura de la ventana y hacen scroll
-              por dentro; en móvil se apilan con su altura natural y la esfera va primero. */}
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 lg:h-[calc(100vh-140px)]">
-            {/* Estado Cuántico Actual - Izquierda */}
-            <div className="lg:col-span-2 lg:min-h-0">
+              por dentro; en móvil se apilan con su altura natural: esfera, controles y
+              al final el estado, para que las compuertas queden a mano. */}
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 lg:gap-6 lg:h-[calc(100vh-140px)]">
+            {/* Estado Cuántico Actual - Izquierda (última en móvil) */}
+            <div className="lg:col-span-2 lg:min-h-0 order-last lg:order-none">
               <Card className="h-full p-4">
                 <div className="lg:h-full lg:overflow-y-auto">
                   <StateDisplay theta={theta} phi={phi} notation={notation} mode={mode} />
@@ -249,7 +252,10 @@ const Index = () => {
                     ))}
                   </ToggleGroup>
                   <span className="text-xs text-muted-foreground">
-                    {VIEW_MODES.find((m) => m.value === mode)?.description}
+                    {(() => {
+                      const current = VIEW_MODES.find((m) => m.value === mode);
+                      return (coarsePointer && current?.touchDescription) || current?.description;
+                    })()}
                   </span>
                 </div>
                 <div className="h-[60vh] lg:h-auto lg:flex-1 lg:min-h-0">

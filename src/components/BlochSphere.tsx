@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { toBlochVector, toSpherical, rotateAroundAxis, type BlochVector, type GateRotation, type KetKey } from '@/lib/bloch';
 import { ket, KET_INFO, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
+import { COARSE_POINTER_QUERY, DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query';
 
 /** Rotación aplicada por una compuerta, con un id único para distinguir aplicaciones sucesivas. */
 export interface AppliedRotation extends GateRotation {
@@ -94,12 +95,31 @@ function Label({
   );
 }
 
+// Píxeles que debe moverse el puntero con el botón pulsado para contar como giro
+// de cámara. Un tap o un click no llegan; así no sacan de la vista polar.
+const ORBIT_SLOP = 8;
+
 /** Mueve la cámara al cambiar de modo y detecta cuándo el usuario toma el control. */
-function CameraRig({ mode, onUserOrbit }: { mode: ViewMode; onUserOrbit?: () => void }) {
-  const { camera } = useThree();
+function CameraRig({
+  mode,
+  onUserOrbit,
+  enableZoom,
+  enablePan,
+}: {
+  mode: ViewMode;
+  onUserOrbit?: () => void;
+  enableZoom: boolean;
+  enablePan: boolean;
+}) {
+  const { camera, gl } = useThree();
   const target = useRef<THREE.Vector3 | null>(null);
   const previousMode = useRef(mode);
   const skipNextAnimation = useRef(false);
+  // Refs para que el listener de puntero vea siempre el modo y callback actuales
+  const modeRef = useRef(mode);
+  const onUserOrbitRef = useRef(onUserOrbit);
+  modeRef.current = mode;
+  onUserOrbitRef.current = onUserOrbit;
 
   useEffect(() => {
     if (mode === previousMode.current) return;
@@ -127,23 +147,46 @@ function CameraRig({ mode, onUserOrbit }: { mode: ViewMode; onUserOrbit?: () => 
     }
   });
 
-  const handleStart = () => {
-    target.current = null; // el usuario toma el control
-    if (mode === 'polo' && onUserOrbit) {
-      skipNextAnimation.current = true;
-      onUserOrbit();
-    }
-  };
+  // El giro manual se detecta con el puntero, no con onStart de OrbitControls, que
+  // salta ya en pointerdown: un tap, un click para fijar el estado o el inicio de
+  // un scroll táctil no deben parar la animación de cámara ni abandonar la vista polar.
+  useEffect(() => {
+    const el = gl.domElement;
+    let start: { x: number; y: number } | null = null;
+    let orbiting = false;
+
+    const onDown = (e: PointerEvent) => {
+      start = { x: e.clientX, y: e.clientY };
+      orbiting = false;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!start || orbiting) return;
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) < ORBIT_SLOP) return;
+      orbiting = true;
+      target.current = null; // el usuario toma el control
+      if (modeRef.current === 'polo' && onUserOrbitRef.current) {
+        skipNextAnimation.current = true;
+        onUserOrbitRef.current();
+      }
+    };
+    const onUp = () => {
+      start = null;
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onUp);
+    };
+  }, [gl]);
 
   return (
-    <OrbitControls
-      enablePan={true}
-      enableZoom={true}
-      enableRotate={true}
-      minDistance={2}
-      maxDistance={8}
-      onStart={handleStart}
-    />
+    <OrbitControls enablePan={enablePan} enableZoom={enableZoom} enableRotate={true} minDistance={2} maxDistance={8} />
   );
 }
 
@@ -428,6 +471,12 @@ export function BlochSphere({
   const { resolvedTheme } = useTheme();
   const palette = resolvedTheme === 'light' ? PALETTES.light : PALETTES.dark;
 
+  // Por debajo de lg la esfera va apilada con el resto: la rueda debe hacer scroll
+  // de página (salvo en táctil, donde el zoom es el pellizco) y el paneo con dos
+  // dedos solo descentra la esfera.
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
+
   return (
     <div className={`sphere-container rounded-xl ${className}`}>
       <Canvas camera={{ position: CAMERA_POSITIONS.libre, fov: 50 }} style={{ height: '100%', width: '100%' }}>
@@ -440,7 +489,12 @@ export function BlochSphere({
           mode={mode}
           palette={palette}
         />
-        <CameraRig mode={mode} onUserOrbit={onUserOrbit} />
+        <CameraRig
+          mode={mode}
+          onUserOrbit={onUserOrbit}
+          enableZoom={isDesktop || coarsePointer}
+          enablePan={isDesktop}
+        />
       </Canvas>
     </div>
   );

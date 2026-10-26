@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,8 +51,9 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
   const i = ket('plusI', notation);
   const o = ket('minusI', notation);
 
+  // Sin Card propia: la tarjeta la pone Index.tsx
   return (
-    <Card className="p-4">
+    <div>
       <h3 className="text-lg font-semibold mb-1 text-primary">Teoría</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Siguiendo las lecciones 30 (<em>Píntame el estado</em>) y 31 (<em>La esfera de Bloch</em>) del curso Mundo
@@ -62,7 +62,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="phasor">
-          <AccordionTrigger className="text-sm">1. Del fasor al estado cuántico</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">1. Del fasor al estado cuántico</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               En ondas clásicas, el fasor resume amplitud y fase de una oscilación como E = E₀ cos(θ) en una flecha que
@@ -81,7 +81,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="hilbert">
-          <AccordionTrigger className="text-sm">2. Espacio de Hilbert y regla de Born</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">2. Espacio de Hilbert y regla de Born</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>Un estado se escribe como combinación lineal de los vectores de la base:</p>
             <div className="math-formula text-center">
@@ -108,7 +108,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="circle">
-          <AccordionTrigger className="text-sm">3. El círculo de Bloch (lección 30)</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">3. El círculo de Bloch (lección 30)</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Si a<sub>u</sub> y a<sub>d</sub> son reales, la condición |a<sub>u</sub>|² + |a<sub>d</sub>|² = 1 describe
@@ -133,7 +133,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="gauss">
-          <AccordionTrigger className="text-sm">4. Gauss, los complejos y el eje Y (lección 31)</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">4. Gauss, los complejos y el eje Y (lección 31)</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               El círculo solo cubre el plano X–Z y pierde la información de la fase imaginaria. Gauss representó cada
@@ -164,7 +164,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="eigenstates">
-          <AccordionTrigger className="text-sm">5. Los seis autoestados</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">5. Los seis autoestados</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Cada eje de la esfera corresponde a un operador de espín. Sus dos autoestados son los puntos opuestos del
@@ -212,7 +212,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="coordinates">
-          <AccordionTrigger className="text-sm">6. Coordenadas sobre la esfera</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">6. Coordenadas sobre la esfera</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>La posición de la flecha se describe con dos ángulos:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
@@ -250,7 +250,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="gates">
-          <AccordionTrigger className="text-sm">7. Compuertas como rotaciones</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">7. Compuertas como rotaciones</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Toda compuerta de un qubit es, salvo una fase global e<sup>iγ</sup>, una rotación de la esfera alrededor de
@@ -319,7 +319,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="measurement">
-          <AccordionTrigger className="text-sm">8. Medición en distintas bases</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">8. Medición en distintas bases</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Medir S<sub>z</sub> colapsa el estado a {u} o {d} con probabilidades |a<sub>u</sub>|² y |a<sub>d</sub>|².
@@ -344,7 +344,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
         </AccordionItem>
 
         <AccordionItem value="density">
-          <AccordionTrigger className="text-sm">9. La matriz de densidad y el interior de la esfera</AccordionTrigger>
+          <AccordionTrigger className="text-sm text-left">9. La matriz de densidad y el interior de la esfera</AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground space-y-2">
             <p>
               Otra forma de escribir el mismo estado es la matriz de densidad ρ = |ψ⟩⟨ψ|. Para un qubit siempre se
@@ -368,6 +368,6 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </Card>
+    </div>
   );
 }

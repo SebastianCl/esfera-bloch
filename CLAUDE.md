@@ -59,7 +59,9 @@ Sans (pila del sistema, `fontFamily.sans` en `tailwind.config.ts`) para interfaz
 
 ### Layout
 
-La rejilla de `Index.tsx` tiene altura fija de ventana solo en `lg` (`lg:h-[calc(100vh-140px)]`) y cada tarjeta hace scroll por dentro (`lg:min-h-0`, `lg:overflow-y-auto`). Por debajo de `lg` las tarjetas se apilan con altura natural, la esfera va primera (`order-first`) y ocupa `60vh`. Si tocas alturas, mantén esa separación: las utilidades de scroll interno llevan prefijo `lg:`.
+La rejilla de `Index.tsx` tiene altura fija de ventana solo en `lg` (`lg:h-[calc(100vh-140px)]`) y cada tarjeta hace scroll por dentro (`lg:min-h-0`, `lg:overflow-y-auto`). Por debajo de `lg` las tarjetas se apilan con altura natural en el orden esfera (`order-first`, `60vh`), controles y estado (`order-last`). Si tocas alturas, mantén esa separación: las utilidades de scroll interno llevan prefijo `lg:`. `StateDisplay` y `QuantumEducation` no llevan `Card` propia: la pone `Index.tsx`.
+
+Táctil y pantallas pequeñas: OrbitControls pone `touch-action: none` en el canvas; `index.css` lo sobreescribe a `pan-y` por debajo de `lg` para que el gesto vertical siga siendo scroll de página y solo el horizontal gire la cámara. `BlochSphere.tsx` desactiva la rueda de zoom y el paneo por debajo de `lg` con `useMediaQuery` (`src/hooks/use-media-query.ts`), salvo el zoom en punteros gruesos (pellizco). El giro manual que saca de la vista polar se detecta con un umbral de píxeles sobre el puntero (`ORBIT_SLOP`), no con `onStart` de OrbitControls, para que un tap, un click o el arranque de un scroll no cambien de modo. `VIEW_MODES` tiene `touchDescription` para el texto de ayuda en táctil.
 
 ### TypeScript
 

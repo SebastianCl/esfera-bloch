@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { MatrixView } from '@/components/MatrixView';
@@ -108,8 +107,9 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
   const k0 = ket('zero', notation);
   const k1 = ket('one', notation);
 
+  // Sin Card propia: la tarjeta la pone Index.tsx, y un marco dentro de otro solo resta ancho en móvil
   return (
-    <Card className="p-4 space-y-4">
+    <div className="space-y-4">
       <h3 className="text-lg font-semibold text-primary">Estado cuántico actual</h3>
 
       {/* Notación de Dirac */}
@@ -266,6 +266,6 @@ export function StateDisplay({ theta, phi, notation, mode }: StateDisplayProps) 
           &lt; 1 y quedaría dentro de la esfera.
         </p>
       </div>
-    </Card>
+    </div>
   );
 }

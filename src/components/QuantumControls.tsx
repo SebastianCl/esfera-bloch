@@ -56,7 +56,8 @@ export function QuantumControls({
       {/* Quantum Gates */}
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-3 text-primary">Compuertas cuánticas</h3>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Tres columnas cuando la tarjeta va a todo el ancho; dos en la columna estrecha de lg */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
           {gates.map((gate) => {
             const rotation = GATE_ROTATIONS[gate.name];
             return (
@@ -187,7 +188,7 @@ export function QuantumControls({
       {/* Preset States */}
       <Card className="p-4">
         <h3 className="text-lg font-semibold mb-3 text-primary">Estados predefinidos</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
           {KET_KEYS.map((key) => {
             const leavesCircle = isCircle && (key === 'plusI' || key === 'minusI');
             return (

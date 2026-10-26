@@ -8,8 +8,19 @@
  */
 export type ViewMode = 'libre' | 'polo' | 'circulo';
 
-export const VIEW_MODES: { value: ViewMode; label: string; description: string }[] = [
-  { value: 'libre', label: 'Esfera 3D', description: 'Cámara libre: arrastra para girar, rueda para acercar.' },
+export const VIEW_MODES: {
+  value: ViewMode;
+  label: string;
+  description: string;
+  /** Variante del texto para pantallas táctiles, donde no hay rueda ni arrastre con ratón. */
+  touchDescription?: string;
+}[] = [
+  {
+    value: 'libre',
+    label: 'Esfera 3D',
+    description: 'Cámara libre: arrastra para girar, rueda para acercar.',
+    touchDescription: 'Cámara libre: desliza en horizontal para girar, pellizca para acercar.',
+  },
   { value: 'polo', label: 'Desde el polo', description: 'Vista desde |0⟩: el ecuador es el plano complejo.' },
   { value: 'circulo', label: 'Círculo 2D', description: 'Solo amplitudes reales: el plano XZ de la lección 30.' },
 ];
