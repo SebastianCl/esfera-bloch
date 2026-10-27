@@ -1,27 +1,17 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
+// Con el hash router cualquier "#algo" suelto acaba aquí: en español y con el tema.
+const NotFound = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+    <div className="text-center space-y-2">
+      <h1 className="text-4xl font-bold">404</h1>
+      <p className="text-muted-foreground">Esta página no existe.</p>
+      <Button asChild variant="link">
+        <Link to="/">Volver al laboratorio</Link>
+      </Button>
     </div>
-  );
-};
+  </div>
+);
 
 export default NotFound;

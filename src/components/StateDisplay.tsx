@@ -2,6 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { MatrixView } from '@/components/MatrixView';
+import { DiracFormula } from '@/components/DiracFormula';
+import { CircleFormula } from '@/components/CircleFormula';
 import {
   amplitudes,
   angleBetween,
@@ -150,11 +152,8 @@ export function StateDisplay({ theta, phi, notation, mode, onRotationChange }: S
   const probabilities = measurementProbabilities(v);
   const rho = densityMatrix(v);
 
-  // Modo círculo: la fórmula cos(α/2)|0⟩ + sin(α/2)|1⟩ da las amplitudes con el
-  // signo opuesto cuando α > 180° (fase global −1: el mismo estado).
   const isCircle = mode === 'circulo';
   const circleAlpha = circleAngleFromState({ theta, phi });
-  const circleFlipsSign = isCircle && circleAlpha > Math.PI + 1e-9;
 
   const k0 = ket('zero', notation);
   const k1 = ket('one', notation);
@@ -167,27 +166,11 @@ export function StateDisplay({ theta, phi, notation, mode, onRotationChange }: S
       {/* Notación de Dirac */}
       <div>
         <h4 className={`${SECTION_LABEL} mb-2`}>Notación de Dirac</h4>
-        <div className="math-formula text-center text-base lg:text-lg py-3">
-          |ψ⟩ = {formatComplex(alpha)}
-          {k0} + ({formatComplex(beta)}){k1}
-        </div>
+        <DiracFormula state={{ theta, phi }} notation={notation} className="text-base lg:text-lg py-3" />
         <div className="math-formula text-center py-2 mt-2 text-xs">
           = cos({degrees(theta / 2)}°){k0} + e^(i·{degrees(shownPhi)}°) sin({degrees(theta / 2)}°){k1}
         </div>
-        {isCircle && (
-          <div className="math-formula text-center py-2 mt-2 text-xs">
-            Círculo: cos(α/2){k0} + sin(α/2){k1} = {formatComplex({ re: Math.cos(circleAlpha / 2), im: 0 })}
-            {k0} + ({formatComplex({ re: Math.sin(circleAlpha / 2), im: 0 })}){k1}
-          </div>
-        )}
-        {circleFlipsSign && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Con α &gt; 180° la fórmula del círculo da las amplitudes con el signo opuesto a las de arriba. Ese −1
-            multiplica a todo el estado: es una fase global, no se puede medir y describe el mismo punto de la esfera.
-            No es el signo entre {k0} y {k1} (φ = 180°), que es una fase relativa y sí distingue{' '}
-            {ket('minus', notation)} de {ket('plus', notation)}.
-          </p>
-        )}
+        {isCircle && <CircleFormula state={{ theta, phi }} notation={notation} />}
         <p className="text-xs text-muted-foreground mt-2">
           Norma 1: |α|² + |β|² = {norm.toFixed(3)}. Convención: α real y ≥ 0 (y si α = 0, β = 1), porque la fase
           global e^(iγ) no es observable; por eso bastan dos ángulos, θ y φ.

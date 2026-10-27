@@ -25,6 +25,13 @@ interface BlochSphereProps {
   mode: ViewMode;
   /** El usuario giró la cámara a mano en una vista fija (polo): la vista pasa a libre. */
   onUserOrbit?: () => void;
+  /**
+   * Zoom con la rueda o el pellizco, y paneo. Por defecto, lo del laboratorio
+   * (escritorio o puntero grueso). El curso los desactiva: su esfera está siempre
+   * en pantalla y la rueda encima debe hacer scroll de página, no zoom.
+   */
+  enableZoom?: boolean;
+  enablePan?: boolean;
 }
 
 // Mapeo física → Three.js. En física Z es vertical; en Three.js lo es Y.
@@ -467,6 +474,8 @@ export function BlochSphere({
   notation,
   mode,
   onUserOrbit,
+  enableZoom,
+  enablePan,
 }: BlochSphereProps) {
   // El tema se lee aquí, fuera del Canvas, y se pasa como prop a la escena
   const { resolvedTheme } = useTheme();
@@ -493,8 +502,8 @@ export function BlochSphere({
         <CameraRig
           mode={mode}
           onUserOrbit={onUserOrbit}
-          enableZoom={isDesktop || coarsePointer}
-          enablePan={isDesktop}
+          enableZoom={enableZoom ?? (isDesktop || coarsePointer)}
+          enablePan={enablePan ?? isDesktop}
         />
       </Canvas>
     </div>

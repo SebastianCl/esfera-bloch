@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { MatrixView } from '@/components/MatrixView';
 import { GATE_ROTATIONS, GATE_UNITARIES, type BlochVector, type KetKey } from '@/lib/bloch';
 import { formatComplexExact, formatGlobalPhase } from '@/lib/format';
-import { ket, KET_INFO, KET_KEYS, KET_LABELS, type Notation } from '@/lib/notation';
+import { ket, ketExpression, KET_INFO, KET_KEYS, KET_LABELS, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
 
 interface QuantumEducationProps {
@@ -21,26 +21,6 @@ const axisSymbol = (axis: BlochVector): string => {
   if (axis.y === 1) return 'y';
   if (axis.z === 1) return 'z';
   return 'n̂';
-};
-
-/** Expresión de cada autoestado en la base Z, con la notación elegida. */
-const expression = (key: KetKey, notation: Notation): string => {
-  const u = ket('zero', notation);
-  const d = ket('one', notation);
-  switch (key) {
-    case 'zero':
-      return u;
-    case 'one':
-      return d;
-    case 'plus':
-      return `(${u} + ${d})/√2`;
-    case 'minus':
-      return `(${u} − ${d})/√2`;
-    case 'plusI':
-      return `(${u} + i${d})/√2`;
-    case 'minusI':
-      return `(${u} − i${d})/√2`;
-  }
 };
 
 export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEducationProps) {
@@ -200,7 +180,7 @@ export function QuantumEducation({ notation, onSelectMode, onPreset }: QuantumEd
                           {KET_LABELS.computacional[key]}
                         </button>
                       </td>
-                      <td className="py-1 font-mono">{expression(key, notation)}</td>
+                      <td className="py-1 font-mono">{ketExpression(key, notation)}</td>
                     </tr>
                   ))}
                 </tbody>

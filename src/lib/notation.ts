@@ -39,6 +39,26 @@ export const ket = (key: KetKey, notation: Notation): string => KET_LABELS[notat
 
 export const KET_KEYS: KetKey[] = ['zero', 'one', 'plus', 'minus', 'plusI', 'minusI'];
 
+/** Expresión de cada autoestado en la base Z, con la notación elegida. */
+export const ketExpression = (key: KetKey, notation: Notation): string => {
+  const u = ket('zero', notation);
+  const d = ket('one', notation);
+  switch (key) {
+    case 'zero':
+      return u;
+    case 'one':
+      return d;
+    case 'plus':
+      return `(${u} + ${d})/√2`;
+    case 'minus':
+      return `(${u} − ${d})/√2`;
+    case 'plusI':
+      return `(${u} + i${d})/√2`;
+    case 'minusI':
+      return `(${u} − i${d})/√2`;
+  }
+};
+
 /** Descripción corta de cada autoestado: operador, orientación y valor en el plano complejo. */
 export const KET_INFO: Record<KetKey, { operator: string; axis: string; complex: string; description: string }> = {
   zero: { operator: 'Sz', axis: '+Z', complex: '', description: 'Polo norte' },
