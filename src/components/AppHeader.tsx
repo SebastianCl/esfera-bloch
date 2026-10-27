@@ -1,6 +1,6 @@
-import { BookOpen, FlaskConical, Home } from 'lucide-react';
+import { BookOpen, FlaskConical } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -21,7 +21,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-muted text-foreground font-medium' : 'text-muted-foreground',
   );
 
-/** Cabecera común a las dos páginas: título, enlace al sitio, sección, notación y tema. */
+/** Cabecera común a las dos páginas: título, sección, notación y tema. */
 export function AppHeader({ subtitle }: AppHeaderProps) {
   const { notation, setNotation } = useNotation();
 
@@ -35,16 +35,9 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
           </div>
-          {/* Solo lo global: volver al sitio, sección de la app, notación y tema.
+          {/* Solo lo global: sección de la app, notación y tema.
               Reiniciar y Aleatorio viven junto a la esfera de cada página. */}
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
-              <a href="../index.html">
-                <Home aria-hidden="true" />
-                Inicio
-              </a>
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
             <nav aria-label="Secciones de la aplicación" className="flex items-center gap-1">
               <NavLink to="/" end className={navLinkClass}>
                 <FlaskConical aria-hidden="true" />
