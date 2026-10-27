@@ -175,4 +175,11 @@ All colors MUST be HSL.
       touch-action: pan-y !important;
     }
   }
+
+  /* La esfera del curso está siempre en pantalla (sticky): el deslizamiento
+     vertical encima debe hacer scroll a cualquier ancho, también en portátiles
+     táctiles de escritorio. */
+  .sphere-dock canvas {
+    touch-action: pan-y !important;
+  }
 }

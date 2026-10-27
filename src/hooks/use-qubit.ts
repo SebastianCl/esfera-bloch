@@ -15,6 +15,7 @@ import {
 } from '@/lib/bloch';
 import { ket, type Notation } from '@/lib/notation';
 import type { ViewMode } from '@/lib/modes';
+import type { SphereAction } from '@/lib/course';
 
 /**
  * Estado del qubit y todas las acciones sobre él: compuertas (con animación e
@@ -194,6 +195,37 @@ export function useQubit({ notation, initial = DEFAULT_INITIAL, notify }: UseQub
     setMode(next);
   };
 
+  /**
+   * Único mapeo acción → handler para los botones del curso. Un clic, un
+   * handler que cambie el estado (las secuencias son botones numerados, porque
+   * applyGate lee θ/φ del cierre del render y la esfera anima una rotación a la
+   * vez). `circle` deja el estado en el plano XZ por construcción, así que
+   * puede poner el modo círculo sin proyección ni aviso.
+   */
+  const run = (action: SphereAction) => {
+    switch (action.type) {
+      case 'preset':
+        applyPreset(action.key);
+        break;
+      case 'gate':
+        applyGate(action.gate);
+        break;
+      case 'mode':
+        handleModeChange(action.mode);
+        break;
+      case 'angles': {
+        const next = { theta: action.theta, phi: action.phi };
+        manualChange(next);
+        leaveCircleIfNeeded(next, 'Este estado');
+        break;
+      }
+      case 'circle':
+        manualChange(stateFromCircleAngle(action.alpha));
+        if (mode !== 'circulo') setMode('circulo');
+        break;
+    }
+  };
+
   return {
     theta,
     phi,
@@ -212,6 +244,7 @@ export function useQubit({ notation, initial = DEFAULT_INITIAL, notify }: UseQub
     changeMode: handleModeChange,
     /** El usuario giró la cámara a mano en una vista fija: vuelta a libre sin proyectar ni avisar. */
     exitFixedView: () => setMode('libre'),
+    run,
   };
 }
 

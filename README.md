@@ -33,8 +33,11 @@ Herramienta educativa en español para visualizar y manipular el estado de un qu
 - **Selector de notación**: computación cuántica (|0⟩, |1⟩, |+⟩, …) o la del curso (|u⟩, |d⟩, |r⟩, |l⟩, |i⟩, |o⟩).
 - Tema oscuro o claro.
 
-### Teoría
-Pestaña con nueve secciones que siguen las dos lecciones y añaden la fase global, el doble recubrimiento SU(2)→SO(3), las matrices de las compuertas, la relación ángulo ↔ probabilidad y la matriz de densidad, con botones que llevan la esfera al modo o estado del que se habla. Los informes de clase y la investigación teórica están en `docs/`.
+### Guía rápida
+Pestaña de referencia junto a los controles: los seis autoestados (operador, eje, las dos notaciones y su expresión), las compuertas con eje, ángulo, efecto y matriz con su fase global, y qué son θ y φ. Los nombres de estados y compuertas son botones que actúan sobre la esfera, y cada sección enlaza al capítulo del curso que la explica.
+
+### Curso de teoría (`/#/teoria`)
+Página aparte con diez capítulos que siguen las lecciones 30 y 31 y las amplían: del fasor al estado cuántico, espacio de Hilbert y regla de Born, el círculo de Bloch, el plano complejo y el eje Y, los seis autoestados, las coordenadas θ y φ, las compuertas como rotaciones, la medición en otras bases, la matriz de densidad y, al final, los errores conceptuales frecuentes. Una sola esfera acompaña al texto (fija a la derecha en escritorio, arriba en móvil) y cada capítulo la mueve con sus botones; termina con un ejercicio de autocomprobación con respuesta desplegable y botones que preparan la esfera. Cada capítulo tiene su enlace: `/#/teoria/compuertas`, por ejemplo. Los informes de clase y la investigación teórica que sirven de fuente están en `docs/`.
 
 ## 🚀 Inicio rápido
 
@@ -45,10 +48,10 @@ pnpm install
 pnpm dev
 ```
 
-La aplicación queda en `http://localhost:8080` (puerto fijado en `vite.config.ts`).
+La aplicación queda en `http://localhost:8080` (puerto fijado en `vite.config.ts`): el laboratorio en `/#/` y el curso en `/#/teoria`. Las rutas van con hash porque la app se sirve como página estática sin fallback de servidor.
 
 ```bash
-pnpm test      # tests de la matemática del qubit y de los formateadores (Vitest)
+pnpm test      # tests de la matemática del qubit, los formateadores, la notación y el curso (Vitest)
 pnpm lint      # eslint
 pnpm build     # build de producción en dist/
 pnpm preview   # sirve dist/
@@ -61,6 +64,7 @@ Para comprobar tipos: `npx tsc -p tsconfig.app.json --noEmit`.
 - **React 18 + TypeScript + Vite**
 - **Three.js** vía **@react-three/fiber** y **@react-three/drei** para el 3D
 - **shadcn/ui**, **Radix UI** y **Tailwind CSS** para la interfaz
+- **react-router-dom** (rutas con hash) para las dos páginas
 - **Sonner** para las notificaciones, **next-themes** para el tema
 - **Vitest** para los tests
 
@@ -77,17 +81,35 @@ src/
 │   ├── format.ts            # Formato de complejos (decimal y exacto) y fases globales
 │   ├── format.test.ts       # Tests de los formateadores
 │   ├── notation.ts          # Las dos notaciones de los autoestados
-│   └── modes.ts             # Modos de vista (libre, polo, círculo)
+│   ├── notation.test.ts
+│   ├── modes.ts             # Modos de vista (libre, polo, círculo)
+│   ├── course.ts            # Capítulos del curso, acciones sobre la esfera,
+│   │                        # demostraciones y ejercicios
+│   └── course.test.ts       # Cada secuencia llega al estado que promete
+├── hooks/
+│   ├── use-qubit.ts         # El estado del qubit y todas sus acciones
+│   └── use-notation.ts      # Contexto de notación, persistido
 ├── components/
 │   ├── BlochSphere.tsx      # Escena 3D: esfera, etiquetas, animación, cámaras
-│   ├── QuantumControls.tsx  # Compuertas, circuito, sliders y presets
-│   ├── StateDisplay.tsx     # Estado actual, coordenadas, probabilidades y matriz de densidad
-│   ├── QuantumEducation.tsx # Teoría siguiendo las lecciones
+│   ├── AppHeader.tsx        # Título, navegación Laboratorio / Teoría, notación y tema
+│   ├── QuantumControls.tsx  # Compuertas, circuito aplicado, presets, reinicio y aleatorio
+│   ├── StateDisplay.tsx     # Estado actual, sliders, probabilidades y matriz de densidad
+│   ├── QuickGuide.tsx       # Pestaña Guía rápida (tablas compartidas y enlaces al curso)
+│   ├── EigenstateTable.tsx  # Tabla de autoestados (guía y capítulo 5)
+│   ├── GateTable.tsx        # Tabla de compuertas y sus matrices (guía y capítulo 7)
+│   ├── AnglesSummary.tsx    # Qué son θ y φ (guía y capítulo 6)
+│   ├── StateSummary.tsx     # Lectura del estado bajo la esfera del curso
+│   ├── DiracFormula.tsx     # |ψ⟩ = α|0⟩ + β|1⟩, compartida
+│   ├── CircleFormula.tsx    # Forma cos(α/2)|0⟩ + sin(α/2)|1⟩ del modo círculo
+│   ├── ViewModeToggle.tsx   # Selector de modo de vista
 │   ├── MatrixView.tsx       # Matriz 2×2 entre corchetes
 │   ├── ThemeToggle.tsx      # Interruptor de tema
+│   ├── teoria/              # Piezas del curso: esfera fija, capítulo, ejercicio,
+│   │   └── chapters/        # botones de acción, índice… y un archivo por capítulo
 │   └── ui/                  # shadcn/ui generado
 ├── pages/
-│   ├── Index.tsx            # Página principal y dueña del estado
+│   ├── Index.tsx            # Laboratorio (/#/)
+│   ├── Teoria.tsx           # Curso de teoría (/#/teoria)
 │   └── NotFound.tsx
 └── index.css                # Tema (variables HSL) y utilidades propias
 docs/                        # Informes de las lecciones 30 y 31 e investigación teórica

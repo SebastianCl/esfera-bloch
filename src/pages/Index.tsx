@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { AppHeader } from '@/components/AppHeader';
 import { BlochSphere } from '@/components/BlochSphere';
 import { QuantumControls } from '@/components/QuantumControls';
-import { QuantumEducation } from '@/components/QuantumEducation';
+import { QuickGuide } from '@/components/QuickGuide';
 import { StateDisplay } from '@/components/StateDisplay';
 import { ViewModeToggle } from '@/components/ViewModeToggle';
 import { Card } from '@/components/ui/card';
@@ -71,14 +71,14 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* Controles y Teoría - Derecha */}
+            {/* Controles y guía rápida - Derecha (la teoría completa está en /teoria) */}
             <div className="lg:col-span-2 lg:min-h-0">
               <Card className="h-full p-4">
                 <div className="lg:h-full lg:overflow-y-hidden">
                   <Tabs defaultValue="controls" className="w-full lg:h-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="controls">Controles</TabsTrigger>
-                      <TabsTrigger value="theory">Teoría</TabsTrigger>
+                      <TabsTrigger value="guide">Guía rápida</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="controls" className="mt-4 lg:h-[calc(100%-2.5rem)]">
@@ -97,9 +97,9 @@ const Index = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="theory" className="mt-4 lg:h-[calc(100%-2.5rem)]">
+                    <TabsContent value="guide" className="mt-4 lg:h-[calc(100%-2.5rem)]">
                       <div className="panel-scroll lg:h-full lg:overflow-y-auto lg:pr-3">
-                        <QuantumEducation notation={notation} onSelectMode={q.changeMode} onPreset={q.applyPreset} />
+                        <QuickGuide notation={notation} onPreset={q.applyPreset} onGate={q.applyGate} />
                       </div>
                     </TabsContent>
                   </Tabs>
