@@ -80,6 +80,15 @@ Táctil y pantallas pequeñas: OrbitControls pone `touch-action: none` en el can
 
 `strict` está desactivado en todos los tsconfig (`noImplicitAny: false`, `strictNullChecks: false`). ESLint tiene `@typescript-eslint/no-unused-vars` en off. Alias `@/` → `src/`.
 
+## Despliegue
+
+Cloudflare Workers (Workers Builds) con el repo de GitHub conectado: cada push a `main` construye y publica en `https://esfera-bloch.cardonaloaizasebastian112.workers.dev/#/`. No hay dominio propio. Lo que hace funcionar el build, y por qué:
+
+- `wrangler.jsonc` declara `assets.directory: "./dist"` y el fallback SPA. Sin él, `npx wrangler deploy` intenta autoconfigurar el proyecto y falla con `ERR_PNPM_IGNORED_BUILDS` (pnpm bloquea el script de `workerd`).
+- `pnpm-lock.yaml` es el único lockfile (ver Comandos). Cloudflare elige el gestor por el lockfile; con `bun.lockb` usó bun y el `--frozen-lockfile` falló.
+- Variables de **Settings → Builds → Variables and secrets** (no las de «Runtime», que el build no lee): `PNPM_VERSION=12.4.1` y `NODE_VERSION=20`. Cloudflare trae pnpm 9.10 por defecto, que no entiende el `pnpm-workspace.yaml` actual (`allowBuilds` y `overrides` en el YAML, sin `packages`). No fijes la versión con `packageManager` en `package.json`: pnpm 12 exige entonces actualizar el lockfile y `--frozen-lockfile` falla.
+- Build command `pnpm build`, deploy command `npx wrangler deploy` (el de por defecto).
+
 ## Documentación de dominio
 
 `docs/` contiene informes de clase (Lección 30 y 31) sobre el estado cuántico y la esfera de Bloch y una investigación teórica más amplia (`Investigación Esfera de Bloch.md`: matriz de densidad, SU(2)/SO(3), compuertas como matrices, canales de ruido, errores conceptuales), en Markdown. Son la fuente de los capítulos del curso (`CHAPTERS[].source` dice de dónde sale cada uno) y de la guía rápida; no se consumen desde el código.
