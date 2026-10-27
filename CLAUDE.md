@@ -19,7 +19,7 @@ pnpm test         # vitest run (src/lib/{bloch,format,notation,course}.test.ts)
 
 No hay script de typecheck. `pnpm build` no corre `tsc`; para verificar tipos usa `npx tsc -p tsconfig.app.json --noEmit`. `.claude/launch.json` define la configuración `dev` para levantar el servidor desde el navegador integrado de Claude.
 
-Hay tres lockfiles (`pnpm-lock.yaml`, `package-lock.json`, `bun.lockb`). `pnpm-workspace.yaml` y `pnpm.overrides` en `package.json` indican que pnpm es el gestor en uso; no regeneres los otros lockfiles.
+El único lockfile es `pnpm-lock.yaml`; `pnpm-workspace.yaml` y `pnpm.overrides` en `package.json` indican que pnpm es el gestor. No añadas `package-lock.json` ni `bun.lockb`: Cloudflare Pages elige el gestor por el lockfile que encuentra y con un `bun.lockb` desactualizado el deploy falló (`bun install --frozen-lockfile`).
 
 ## Arquitectura
 
